@@ -134,7 +134,7 @@ def ig_id():
 
 def url_publica(arquivo):
     """URL do arquivo no repositório público (raw.githubusercontent.com)."""
-    repo = os.environ.get("GITHUB_REPOSITORY", "vitorjn09/clipada-midia")
+    repo = os.environ.get("GITHUB_REPOSITORY", "ojngta-cell/CLIPADA")
     ramo = os.environ.get("RAMO_MIDIA", "main")
     rel = arquivo.relative_to(RAIZ).as_posix()
     return f"https://raw.githubusercontent.com/{repo}/{ramo}/{urllib.parse.quote(rel)}"

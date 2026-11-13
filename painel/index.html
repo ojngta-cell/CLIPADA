@@ -1701,7 +1701,7 @@ button.ei-passo:active { transform: scale(.98); }
 <script>
 "use strict";
 /* ================================================================ configuração */
-const DONO = "vitorjn09", REPO = "clipada-midia", RAMO = "main", WORKFLOW = "publicar.yml";
+const DONO = "ojngta-cell", REPO = "CLIPADA", RAMO = "main", WORKFLOW = "publicar.yml";
 const API = `https://api.github.com/repos/${DONO}/${REPO}`;
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -2665,7 +2665,7 @@ function abrirConta() {
     : `<div class="ic-topo">${ic("i-key", "i g")}</div><h2>Conectar ao GitHub</h2>
        <p class="txt">Crie um token uma vez só. Ele fica guardado só neste navegador e não vai para o repositório.</p>
        <ol><li>Abra <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">criar token no GitHub</a>.</li>
-       <li>Repository access: <b>Only select repositories</b> → <code>clipada-midia</code>.</li>
+       <li>Repository access: <b>Only select repositories</b> → <code>CLIPADA</code>.</li>
        <li>Permissions: <b>Contents</b> e <b>Actions</b> em <b>Read and write</b>.</li>
        <li>Gere, copie e cole aqui:</li></ol>
        <input class="input" id="mToken" type="password" placeholder="github_pat_…" autocomplete="off">

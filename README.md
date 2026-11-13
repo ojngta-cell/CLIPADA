@@ -1,4 +1,4 @@
-# clipada-midia
+# CLIPADA
 
 Robô de publicação das clipadas do JNGTA (Rádio Pirata 107,9). Começa só no Instagram
 (Reels); Facebook e YouTube já funcionam se um dia forem ligados.
@@ -27,7 +27,7 @@ a agenda e o estado de cada post, deixa adicionar, editar e apagar posts e
 rodar o robô (testar conexão, verificar, publicar) com confirmação antes.
 Abra o arquivo no navegador, ou ative o GitHub Pages (Settings > Pages >
 Deploy from a branch > `main` / root) e use
-`https://vitorjn09.github.io/clipada-midia/painel/`. Para mudar algo,
+`https://ojngta-cell.github.io/CLIPADA/painel/`. Para mudar algo,
 a página pede um token do GitHub (fine-grained, só este repositório, com
 Contents e Actions em Read and write), que fica guardado só no navegador.
 
