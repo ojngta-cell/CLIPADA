@@ -1,4 +1,38 @@
 {
-  "modelo": { "0": ["reel"], "1": ["reel"], "2": ["reel"], "3": ["reel"], "4": ["reel"], "5": ["reel"], "6": ["reel"] },
-  "itens": []
+  "modelo": {
+    "0": [
+      "reel"
+    ],
+    "1": [
+      "reel"
+    ],
+    "2": [
+      "reel"
+    ],
+    "3": [
+      "reel"
+    ],
+    "4": [
+      "reel"
+    ],
+    "5": [
+      "reel"
+    ],
+    "6": [
+      "reel"
+    ]
+  },
+  "itens": [
+    {
+      "id": "h3gsbbx",
+      "formato": "reel",
+      "redes": [
+        "instagram"
+      ],
+      "data": "2026-11-13",
+      "biblioteca": "ia-001-gta-no-brasil",
+      "status": "agendado",
+      "tema": "E se o GTA fosse no Brasil?"
+    }
+  ]
 }
