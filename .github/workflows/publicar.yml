@@ -1,0 +1,79 @@
+name: Publicar posts
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "publicar, verificar ou conexao"
+        type: choice
+        options: [publicar, verificar, conexao]
+        default: publicar
+      reenviar:
+        description: "Opcional, só com modo publicar: pasta:rede para tentar de novo (ex.: 2026-11-06-reel-venus:youtube). Só zera redes com falhou, erro ou atrasado."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rodar o publicador
+        env:
+          META_TOKEN: ${{ secrets.META_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          MODO: ${{ inputs.modo || 'publicar' }}
+          REENVIAR: ${{ inputs.reenviar }}
+        shell: bash
+        run: |
+          # A saída também vai para saida.txt e vira uma anotação que o painel (painel/index.html) lê.
+          {
+            case "$MODO" in
+              verificar) python publicador/publicar.py --verificar ;;
+              conexao)   python publicador/publicar.py --conexao ;;
+              *)         python publicador/publicar.py ;;
+            esac
+          } 2>&1 | tee saida.txt
+
+      - name: Resultado para o painel
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          arq = Path("saida.txt")
+          texto = arq.read_text(errors="replace").strip() if arq.exists() else ""
+          texto = (texto or "Nada para publicar agora.")[-6000:]
+          texto = texto.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::notice title=Resultado do robô::{texto}")
+          PY
+
+      - name: Guardar o resultado
+        if: always()
+        run: |
+          git config user.name "publicador"
+          git config user.email "publicador@users.noreply.github.com"
+          git add agenda biblioteca
+          if ! git diff --cached --quiet; then
+            git commit -m "Publicador: atualiza estado dos posts"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi
