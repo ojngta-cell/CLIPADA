@@ -288,7 +288,7 @@ def yt_publicar(p, pasta):
         "snippet": {
             "title": titulo[:100],
             "description": p.get("legenda", "")[:5000],
-            "categoryId": "27",  # Educação
+            # Sem categoria fixa: o YouTube usa a categoria padrão do canal.
         },
         "status": {
             "privacyStatus": "public",
