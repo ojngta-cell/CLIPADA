@@ -11,5 +11,22 @@
     "autor": "Claude (imagens e montagem) + voz Torlien (ElevenLabs)",
     "autorizacao": "Conteúdo original gerado com IA; sem imagens, logos ou música do jogo."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/ia-001-gta-no-brasil.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/ia-001-gta-no-brasil.mp4",
+  "publicado": {
+    "instagram": {
+      "id": "18132062509837547",
+      "em": "2026-11-13T23:07:16.914428+00:00",
+      "post": "2026-11-13-reel-ia-001-gta-no-brasil"
+    },
+    "facebook": {
+      "id": "122095313223555261",
+      "em": "2026-11-13T23:07:28.358887+00:00",
+      "post": "2026-11-13-reel-ia-001-gta-no-brasil"
+    },
+    "youtube": {
+      "id": "qJFHv3K-3xI",
+      "em": "2026-11-13T23:07:30.543115+00:00",
+      "post": "2026-11-13-reel-ia-001-gta-no-brasil"
+    }
+  }
 }
