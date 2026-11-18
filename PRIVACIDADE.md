@@ -14,4 +14,13 @@ no Facebook e no YouTube).
   podem ser revogadas a qualquer momento nas configurações da conta da Meta
   ou do Google.
 
-Contato: pelo Instagram @jngta.
+## Exclusão de dados
+
+A ferramenta não tem cadastro de usuários e não guarda dados de outras pessoas
+além do texto dos comentários descrito acima. Para pedir a exclusão desses
+dados, mande uma mensagem para o perfil @ojngta.br no Instagram ou para a
+página OJN no Facebook: eles são apagados em até 30 dias. Para tirar o acesso
+da ferramenta à sua conta, remova o app em facebook.com/settings, na seção
+Integrações comerciais.
+
+Contato: pelo Instagram @ojngta.br ou pela página OJN no Facebook.

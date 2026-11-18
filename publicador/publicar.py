@@ -9,10 +9,13 @@ Uso:
   python publicador/publicar.py              publica o que estiver na hora
   python publicador/publicar.py --verificar  só confere os posts, não publica
   python publicador/publicar.py --conexao    testa o token e mostra as contas
+  python publicador/publicar.py --diagnostico  só leitura: app, status e plays dos reels do Face
   python publicador/publicar.py --preparar   converte PNG em JPG (Instagram só aceita JPG)
 
 Variáveis de ambiente (segredos do repositório):
   META_TOKEN      token de página (longa duração) com permissão de publicar
+  FB_PAGE_TOKEN   token de PÁGINA do app publicado ("Ao vivo"), usado em tudo do Facebook
+                  (opcional; sem ele o token da página é tirado do META_TOKEN)
   FB_PAGE_ID      id da página do Facebook
   IG_USER_ID      id da conta do Instagram (opcional; é descoberto pela página)
   GRAPH_VERSION   versão da API (padrão v23.0)
@@ -23,6 +26,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -46,8 +50,29 @@ EXT_IMAGEM = {".jpg", ".jpeg", ".png"}
 ATRASO_MAXIMO = dt.timedelta(hours=12)
 
 
+SEGREDOS = ("META_TOKEN", "FB_PAGE_TOKEN", "YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN")
+_TOKENS_EXTRAS = set()  # tokens descobertos em execução (ex.: o da página tirado do META_TOKEN)
+
+
+def segredo(nome):
+    """Lê um segredo sem espaço nem Enter no fim (com Enter a Meta recusa o cabeçalho)."""
+    return (os.environ.get(nome) or "").strip()
+
+
+def limpar(texto):
+    """Apaga qualquer token do texto antes de imprimir ou gravar (o repositório é público)."""
+    texto = str(texto)
+    for valor in [segredo(n) for n in SEGREDOS] + sorted(_TOKENS_EXTRAS):
+        if len(valor) >= 8:
+            texto = texto.replace(valor, "***")
+    texto = re.sub(r"(access_token=)[^&\s\"']+", r"\1***", texto)
+    texto = re.sub(r"((?:OAuth|Bearer)\s+)[A-Za-z0-9._\-]{20,}", r"\1***", texto)
+    return re.sub(r"\bEAA[A-Za-z0-9]{20,}", "***", texto)
+
+
 class ErroApi(Exception):
-    pass
+    def __init__(self, msg):
+        super().__init__(limpar(msg))
 
 
 # ---------------------------------------------------------------- HTTP
@@ -80,27 +105,54 @@ def _pedir(metodo, url, params=None, corpo=None, cabecalhos=None, tentativas=3):
 
 
 def token():
-    t = os.environ.get("META_TOKEN")
+    t = segredo("META_TOKEN")
     if not t:
         raise ErroApi("META_TOKEN não configurado nos segredos do repositório")
     return t
 
 
-def get(caminho, **params):
-    params["access_token"] = token()
+_FB = {}
+
+
+def token_fb():
+    """Token de página para o Facebook.
+
+    1) FB_PAGE_TOKEN (token de página do app publicado), se existir;
+    2) senão, o token da página tirado do META_TOKEN (GET /{página}?fields=access_token);
+    3) senão, o próprio META_TOKEN (quando ele já é um token de página).
+    Post feito por app em modo Desenvolvimento sai, mas ninguém vê: o app tem de estar Ao vivo.
+    """
+    if "token" in _FB:
+        return _FB["token"]
+    t, origem = segredo("FB_PAGE_TOKEN"), "FB_PAGE_TOKEN"
+    if not t:
+        t, origem = token(), "META_TOKEN"
+        try:
+            derivado = get(pagina_id(), fields="access_token").get("access_token", "").strip()
+            if derivado:
+                _TOKENS_EXTRAS.add(derivado)
+                t, origem = derivado, "página tirada do META_TOKEN"
+        except ErroApi:
+            pass  # o META_TOKEN já é de página: usa ele mesmo
+    _FB.update(token=t, origem=origem)
+    return t
+
+
+def get(caminho, tk=None, **params):
+    params["access_token"] = tk or token()
     return _pedir("GET", f"{GRAPH}/{caminho}", params)
 
 
-def post(caminho, **params):
-    params["access_token"] = token()
+def post(caminho, tk=None, **params):
+    params["access_token"] = tk or token()
     return _pedir("POST", f"{GRAPH}/{caminho}", params)
 
 
-def enviar_binario(url, arquivo, extra=None):
+def enviar_binario(url, arquivo, extra=None, tk=None):
     """Envia o arquivo direto para o servidor de upload da Meta."""
     conteudo = arquivo.read_bytes()
     cab = {
-        "Authorization": f"OAuth {token()}",
+        "Authorization": f"OAuth {tk or token()}",
         "offset": "0",
         "file_size": str(len(conteudo)),
         "Content-Type": "application/octet-stream",
@@ -112,14 +164,14 @@ def enviar_binario(url, arquivo, extra=None):
 # ---------------------------------------------------------------- contas
 
 def pagina_id():
-    p = os.environ.get("FB_PAGE_ID")
+    p = segredo("FB_PAGE_ID")
     if not p:
         raise ErroApi("FB_PAGE_ID não configurado nos segredos do repositório")
     return p
 
 
 def ig_id():
-    i = os.environ.get("IG_USER_ID")
+    i = segredo("IG_USER_ID")
     if i:
         return i
     dados = get(pagina_id(), fields="instagram_business_account")
@@ -228,16 +280,22 @@ def ig_publicar(p, pasta):
 # ---------------------------------------------------------------- Facebook
 
 def fb_video(pagina, arquivo, borda, **finalizar):
-    """Fluxo de três etapas usado por reels (video_reels) e stories (video_stories)."""
-    inicio = post(f"{pagina}/{borda}", upload_phase="start")
+    """Fluxo de três etapas usado por reels (video_reels) e stories (video_stories).
+
+    1) start devolve video_id (e às vezes upload_url);
+    2) o arquivo vai para o rupload com Authorization: OAuth <token da página>;
+    3) finish publica (video_state=PUBLISHED) e devolve post_id.
+    """
+    tk = token_fb()
+    inicio = post(f"{pagina}/{borda}", tk=tk, upload_phase="start")
     video = inicio["video_id"]
-    enviar_binario(inicio.get("upload_url") or f"{RUPLOAD}/video-upload/{VERSAO}/{video}", arquivo)
-    fim = post(f"{pagina}/{borda}", upload_phase="finish", video_id=video, **finalizar)
-    return fim.get("post_id") or video
+    enviar_binario(inicio.get("upload_url") or f"{RUPLOAD}/video-upload/{VERSAO}/{video}", arquivo, tk=tk)
+    fim = post(f"{pagina}/{borda}", tk=tk, upload_phase="finish", video_id=video, **finalizar)
+    return {"id": fim.get("post_id") or video, "video_id": video}
 
 
 def fb_foto_sem_publicar(pagina, arquivo):
-    return post(f"{pagina}/photos", url=url_publica(arquivo), published="false")["id"]
+    return post(f"{pagina}/photos", tk=token_fb(), url=url_publica(arquivo), published="false")["id"]
 
 
 def fb_publicar(p, pasta):
@@ -256,25 +314,26 @@ def fb_publicar(p, pasta):
         if e_video(m):
             return fb_video(pagina, m, "video_stories")
         foto = fb_foto_sem_publicar(pagina, m)
-        return post(f"{pagina}/photo_stories", photo_id=foto).get("post_id", foto)
+        return post(f"{pagina}/photo_stories", tk=token_fb(), photo_id=foto).get("post_id", foto)
     # imagem ou carrossel: fotos sem publicar, depois um post no feed com todas
     fotos = [fb_foto_sem_publicar(pagina, m) for m in midias]
     anexos = {f"attached_media[{i}]": json.dumps({"media_fbid": f}) for i, f in enumerate(fotos)}
-    return post(f"{pagina}/feed", message=legenda, **anexos)["id"]
+    return post(f"{pagina}/feed", tk=token_fb(), message=legenda, **anexos)["id"]
 
 
 # ---------------------------------------------------------------- YouTube
 
 def yt_token():
-    faltando = [v for v in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN") if not os.environ.get(v)]
+    faltando = [v for v in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN") if not segredo(v)]
     if faltando:
         raise ErroApi(f"faltam segredos do YouTube: {', '.join(faltando)}")
     r = _pedir("POST", "https://oauth2.googleapis.com/token", {
-        "client_id": os.environ["YT_CLIENT_ID"],
-        "client_secret": os.environ["YT_CLIENT_SECRET"],
-        "refresh_token": os.environ["YT_REFRESH_TOKEN"],
+        "client_id": segredo("YT_CLIENT_ID"),
+        "client_secret": segredo("YT_CLIENT_SECRET"),
+        "refresh_token": segredo("YT_REFRESH_TOKEN"),
         "grant_type": "refresh_token",
     })
+    _TOKENS_EXTRAS.add(r["access_token"])
     return r["access_token"]
 
 
@@ -473,17 +532,21 @@ def publicar_pendentes():
             try:
                 baixar_da_biblioteca(p)
                 ident = PUBLICAR[rede](p, pasta_midias(p, pasta))
-                estado[rede] = {"status": "publicado", "id": ident, "em": agora().isoformat()}
+                extra = {}
+                if isinstance(ident, dict):  # Facebook devolve também o video_id (para o diagnóstico)
+                    extra = {k: v for k, v in ident.items() if k != "id"}
+                    ident = ident["id"]
+                estado[rede] = {"status": "publicado", "id": ident, **extra, "em": agora().isoformat()}
                 marcar_na_biblioteca(p, rede, ident, pasta)
                 print(f"[{nome}] {rede}: publicado ({ident})")
             except Exception as e:  # qualquer falha fica registrada e o resto segue
                 tentativas = atual.get("tentativas", 0) + 1
-                estado[rede] = {"status": "erro", "erro": str(e)[:1000],
+                estado[rede] = {"status": "erro", "erro": limpar(e)[:1000],
                                 "tentativas": tentativas, "em": agora().isoformat()}
                 # Depois de 3 falhas para de tentar, para não repetir post pela metade.
                 if tentativas >= 3:
                     estado[rede]["status"] = "falhou"
-                print(f"[{nome}] {rede}: ERRO {e}")
+                print(f"[{nome}] {rede}: ERRO {limpar(e)}")
                 falhas += 1
             gravar_estado(pasta, estado)
     return falhas
@@ -514,6 +577,16 @@ def conexao():
         print(f"YouTube: {', '.join(nomes) or 'nenhum canal'}")
     pag = get(pagina_id(), fields="name,instagram_business_account{username}")
     print(f"Página do Facebook: {pag.get('name')} ({pagina_id()})")
+    tk = token_fb()
+    eu = get("me", tk=tk, fields="id,name")
+    tipo = "token de PÁGINA" if eu.get("id") == pagina_id() else "ATENÇÃO: não é token desta página"
+    print(f"Facebook publica com: {_FB['origem']} ({tipo}: {eu.get('name')})")
+    try:
+        app = get("app", tk=tk, fields="id,name")
+        print(f"App que publica no Facebook: {app.get('name')} ({app.get('id')}). "
+              "Ele precisa estar 'Ao vivo' em developers.facebook.com, senão o reel sai com 0 views.")
+    except ErroApi as e:
+        print(f"Não deu para ler o app do token: {e}")
     conta = pag.get("instagram_business_account")
     if conta:
         print(f"Instagram: @{conta.get('username')} ({conta['id']})")
@@ -521,6 +594,49 @@ def conexao():
         print(f"Cota de publicação nas últimas 24h: {json.dumps(limite.get('data'))}")
     else:
         print("Nenhuma conta do Instagram ligada à página")
+
+
+def diagnostico():
+    """Só leitura: com que app saiu cada reel do Facebook, status e plays."""
+    tk = token_fb()
+    pagina = pagina_id()
+    try:
+        app = get("app", tk=tk, fields="id,name")
+        print(f"Token do Facebook ({_FB['origem']}) é do app {app.get('name')} ({app.get('id')})")
+    except ErroApi as e:
+        print(f"Não deu para ler o app do token: {e}")
+    # reels que o robô publicou (o estado guarda o video_id dos novos)
+    nossos = {}
+    for pasta, p, _ in ler_posts():
+        fb = ler_estado(pasta).get("facebook", {})
+        if fb.get("status") == "publicado":
+            nossos[str(fb.get("video_id") or fb.get("id"))] = pasta.name
+    reels = get(f"{pagina}/video_reels", tk=tk, limit=15,
+                fields="id,created_time,permalink_url,description,status").get("data", [])
+    if not reels:
+        print("Nenhum reel na página.")
+    for r in reels:
+        vid = r["id"]
+        status = (r.get("status") or {}).get("video_status", "?")
+        try:
+            dados = get(f"{vid}/video_insights", tk=tk, metric="fb_reels_total_plays").get("data", [])
+            plays = dados[0]["values"][0]["value"] if dados else "?"
+        except (ErroApi, KeyError, IndexError):
+            plays = "?"
+        try:
+            app = get(vid, tk=tk, fields="application").get("application", {}).get("name", "?")
+        except ErroApi:
+            app = "?"
+        link = r.get("permalink_url") or ""
+        if link.startswith("/"):
+            link = "https://www.facebook.com" + link
+        origem = f" [agenda: {nossos[vid]}]" if vid in nossos else ""
+        texto = (r.get("description") or "").split("\n")[0][:50]
+        print(f"- {r.get('created_time', '')[:16]} {vid}{origem}: status={status}, plays={plays}, app={app}")
+        print(f"    {texto}")
+        if link:
+            teste = "https://www.facebook.com/plugins/video.php?href=" + urllib.parse.quote(link, safe="")
+            print(f"    Teste sem login (se aparecer 'indisponível', o app não está publicado): {teste}")
 
 
 def preparar():
@@ -555,17 +671,20 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--verificar", action="store_true")
     g.add_argument("--conexao", action="store_true")
+    g.add_argument("--diagnostico", action="store_true")
     g.add_argument("--preparar", action="store_true")
     a = ap.parse_args()
     if a.verificar:
         verificar()
     elif a.conexao:
         conexao()
+    elif a.diagnostico:
+        diagnostico()
     elif a.preparar:
         preparar()
     else:
-        if os.environ.get("REENVIAR", "").strip():
-            reenviar(os.environ["REENVIAR"].strip())
+        if segredo("REENVIAR"):
+            reenviar(segredo("REENVIAR"))
         sys.exit(1 if publicar_pendentes() else 0)
 
 

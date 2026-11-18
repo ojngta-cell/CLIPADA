@@ -1587,6 +1587,7 @@ button.ei-passo:active { transform: scale(.98); }
       <div id="faixaToken3"></div>
       <div class="acoes-robo stagger">
         <div class="card spot acao" data-rodar="conexao"><div class="ic"><svg class="i g"><use href="#i-plug"/></svg></div><b>Testar conexão</b><p>Confere se o robô ainda entra no Facebook, no Instagram e no YouTube. Não publica nada.</p><span class="chip">Seguro</span><svg class="i seta-acao"><use href="#i-right"/></svg></div>
+        <div class="card spot acao" data-rodar="diagnostico"><div class="ic"><svg class="i g"><use href="#i-eye"/></svg></div><b>Diagnóstico do Facebook</b><p>Mostra os últimos reels da página: app que publicou, status e plays. Serve para ver se o reel tem alcance. Não publica nada.</p><span class="chip">Seguro</span><svg class="i seta-acao"><use href="#i-right"/></svg></div>
         <div class="card spot acao" data-rodar="verificar"><div class="ic"><svg class="i g"><use href="#i-list"/></svg></div><b>Verificar posts</b><p>Lê a agenda e aponta arquivo faltando ou formato errado. Não publica nada.</p><span class="chip">Seguro</span><svg class="i seta-acao"><use href="#i-right"/></svg></div>
         <div class="card spot acao destaque" data-rodar="publicar"><div class="ic"><svg class="i g"><use href="#i-send"/></svg></div><b>Publicar agora</b><p>Publica os posts que já passaram da hora. Os de horário futuro continuam esperando.</p><span class="chip warn"><span class="ponto"></span>Publica de verdade</span><svg class="i seta-acao"><use href="#i-right"/></svg></div>
       </div>
@@ -1708,7 +1709,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const NOMES_REDE = { instagram: "Instagram", facebook: "Facebook", youtube: "YouTube" };
 const ICONE_REDE = { instagram: "i-ig", facebook: "i-fb", youtube: "i-yt" };
 const NOMES_TIPO = { reel: "Reel", carrossel: "Carrossel", story: "Story", imagem: "Imagem" };
-const NOMES_MODO = { conexao: "Testar conexão", verificar: "Verificar posts", publicar: "Publicar agora", analises: "Atualizar análises" };
+const NOMES_MODO = { conexao: "Testar conexão", diagnostico: "Diagnóstico do Facebook", verificar: "Verificar posts", publicar: "Publicar agora", analises: "Atualizar análises" };
 const EXT_VIDEO = [".mp4", ".mov"], EXT_IMAGEM = [".jpg", ".jpeg", ".png"];
 const ORDEM_CHAVES = ["quando", "tipo", "redes", "legenda", "midias", "capa", "titulo_facebook", "titulo_youtube", "ia"];
 const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2600,9 +2601,10 @@ async function rodar(modo, reenviar = "") {
     : modo === "publicar"
     ? (fila.length ? `<p>Vai publicar agora: <b>${fila.map((x) => esc(x.pasta)).join(", ")}</b>.</p>` : `<p>Nenhum post passou da hora ainda, então nada deve sair agora.</p>`) + `<p>Posts com hora no futuro continuam esperando.</p>`
     : modo === "analises" ? `<p>Busca agora os números do Instagram, do Facebook e do YouTube e guarda cifrados. Não publica nada. Leva um ou dois minutos.</p>`
-    : modo === "conexao" ? `<p>Confere os acessos ao Facebook, ao Instagram e ao YouTube. Não publica nada.</p>` : `<p>Confere os posts da agenda. Não publica nada.</p>`;
+    : modo === "conexao" ? `<p>Confere os acessos ao Facebook, ao Instagram e ao YouTube. Não publica nada.</p>`
+    : modo === "diagnostico" ? `<p>Lista os últimos reels da página do Facebook com o app que publicou, o status e os plays. Não publica nada.</p>` : `<p>Confere os posts da agenda. Não publica nada.</p>`;
   const inline = modo === "analises"; // as análises atualizam na própria tela, sem pedir confirmação nem ir para a aba Robô
-  if (!inline && !(await confirmar({ titulo: reenviar ? "Enviar de novo?" : NOMES_MODO[modo] + "?", icone: modo === "publicar" ? "i-send" : modo === "conexao" ? "i-plug" : modo === "analises" ? "i-chart" : "i-list", texto, rotulo: reenviar ? "Enviar de novo" : "Rodar agora" }))) return;
+  if (!inline && !(await confirmar({ titulo: reenviar ? "Enviar de novo?" : NOMES_MODO[modo] + "?", icone: modo === "publicar" ? "i-send" : modo === "conexao" ? "i-plug" : modo === "diagnostico" ? "i-eye" : modo === "analises" ? "i-chart" : "i-list", texto, rotulo: reenviar ? "Enviar de novo" : "Rodar agora" }))) return;
   rodando = true;
   if (inline) { progressoAnalises(0); }
   else {
