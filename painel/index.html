@@ -1389,6 +1389,7 @@ button.ei-passo:active { transform: scale(.98); }
         <button data-bf="agendados">Agendados <span data-bc="agendados"></span></button>
         <button data-bf="publicados">Publicados <span data-bc="publicados"></span></button>
         <button data-bf="todos">Todos <span data-bc="todos"></span></button>
+        <button data-bf="arquivados">Arquivados <span data-bc="arquivados"></span></button>
       </div>
       <div class="bib-filtros">
         <label>Categoria <select id="bibCat">
@@ -1697,6 +1698,7 @@ button.ei-passo:active { transform: scale(.98); }
   <symbol id="i-mudo" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6M22 9l-5 6"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
   <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/></symbol>
 </svg>
 
 <script>
@@ -3001,6 +3003,7 @@ function statusBib(b) {
   const ags = POSTS.filter((x) => x.post?.biblioteca === b.nome);
   const pend = ags.find((x) => situacao(x) !== "publicados");
   if (pend) return { s: "agendado", quando: pend.post.quando, pasta: pend.pasta };
+  if (b.ficha.arquivado) return { s: "arquivado" }; // escondido dos prontos; agendado continua aparecendo para não sumir algo que vai sair
   const pub = Object.keys(b.ficha.publicado || {});
   if (pub.length) return { s: "publicado", redes: pub };
   return { s: "pronto" };
@@ -3008,6 +3011,7 @@ function statusBib(b) {
 function chipBib(st) {
   if (st.s === "agendado") return `<span class="chip info"><span class="ponto"></span>${esc(F_COMPLETO.format(new Date(st.quando)))}</span>`;
   if (st.s === "publicado") return `<span class="chip ok">${ic("i-check")}Publicado</span>`;
+  if (st.s === "arquivado") return `<span class="chip">${ic("i-archive")}Arquivado</span>`;
   return `<span class="chip gold"><span class="ponto"></span>Pronto</span>`;
 }
 function chipTikTok(f) {
@@ -3029,9 +3033,9 @@ function desenharBiblioteca() {
   const alvo = $("#bibLista"); pedirNumeros();
   if (!bibCarregou) { alvo.innerHTML = `<div class="vids">${'<div class="skel" style="aspect-ratio:9/16"></div>'.repeat(4)}</div>`; return; }
   if (bibErro) { alvo.innerHTML = vazio("i-alert", "Não consegui ler a biblioteca", esc(bibErro)); return; }
-  const grupo = { pronto: "prontos", agendado: "agendados", publicado: "publicados" };
-  const cont = { prontos: 0, agendados: 0, publicados: 0, todos: BIB.length };
-  BIB.forEach((b) => cont[grupo[statusBib(b).s]]++);
+  const grupo = { pronto: "prontos", agendado: "agendados", publicado: "publicados", arquivado: "arquivados" };
+  const cont = { prontos: 0, agendados: 0, publicados: 0, arquivados: 0, todos: 0 };
+  BIB.forEach((b) => { const g = grupo[statusBib(b).s]; cont[g]++; if (g !== "arquivados") cont.todos++; }); // "Todos" não mostra os arquivados
   const pecas = pecasBib();
   /* conta cada arte (um story ou slide é um cartão), para o número bater com o que aparece */
   const nArtes = (p) => Math.max(1, (PRODUCAO?.[(p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1]] || []).length);
@@ -3041,7 +3045,8 @@ function desenharBiblioteca() {
   /* vídeos e artes na mesma lista: os filtros e a ordem valem para os dois */
   const itens = [];
   BIB.forEach((b) => {
-    if (BIB_FILTRO !== "todos" && grupo[statusBib(b).s] !== BIB_FILTRO) return;
+    const g = grupo[statusBib(b).s];
+    if (BIB_FILTRO === "todos" ? g === "arquivados" : g !== BIB_FILTRO) return;
     const q = quandoBib(b);
     if (!passa(bibCategoriaDe(b), q)) return;
     const f = b.ficha, st = statusBib(b), nb = st.s === "publicado" ? numerosBib(b) : null;
@@ -3057,7 +3062,7 @@ function desenharBiblioteca() {
   });
   /* cada arte da pasta vira um cartão: um story por cartão, todos os slides do carrossel */
   pecas.forEach((p) => {
-    if (BIB_FILTRO !== "todos" && p.g !== BIB_FILTRO) return;
+    if (BIB_FILTRO === "arquivados" || (BIB_FILTRO !== "todos" && p.g !== BIB_FILTRO)) return;
     const cat = p.it.formato === "stories" ? "story" : p.it.formato;
     if (!passa(cat, p.it.data)) return;
     const pasta = (p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1];
@@ -3078,7 +3083,7 @@ function desenharBiblioteca() {
     const filtrado = BIB_CAT !== "todas" || BIB_DIA !== "todos";
     alvo.innerHTML = !BIB.length && !pecas.length ? vazio("i-film", "A biblioteca está vazia", "Quando eu terminar um vídeo, ele aparece aqui com capa, legenda e títulos, pronto para agendar.")
       : filtrado ? vazio("i-film", "Nada com esses filtros", "Tente outra categoria ou outro dia da semana.")
-      : vazio("i-film", "Nada nesse filtro", BIB_FILTRO === "prontos" ? "Todos os vídeos já foram agendados ou publicados." : "Nenhum vídeo aqui ainda.");
+      : vazio("i-film", "Nada nesse filtro", BIB_FILTRO === "prontos" ? "Todos os vídeos já foram agendados ou publicados." : BIB_FILTRO === "arquivados" ? "Nenhum vídeo arquivado. Para tirar um vídeo dos prontos, abra ele e toque em Arquivar." : "Nenhum vídeo aqui ainda.");
     return;
   }
   // ordem da tela, para deslizar de um item ao próximo; o carrossel entra uma vez só (os slides passam para o lado)
@@ -3258,6 +3263,7 @@ function slideReel(en, i) {
         <button data-r="som" aria-label="Som"><span>${ic(REEL_SOM ? "i-vol" : "i-mudo")}</span><small>${REEL_SOM ? "Som" : "Mudo"}</small></button>
         <button data-r="agendar" aria-label="Agendar"><span>${ic("i-cal")}</span><small>${st.s === "pronto" ? "Agendar" : "De novo"}</small></button>
         <button data-r="detalhes" aria-label="Informações"><span>${ic("i-info")}</span><small>Info</small></button>
+        ${st.s === "agendado" ? "" : `<button data-r="arquivar" aria-label="${f.arquivado ? "Desarquivar" : "Arquivar"}"><span>${ic("i-archive")}</span><small>${f.arquivado ? "Desarquivar" : "Arquivar"}</small></button>`}
         ${n ? "" : `<a href="${esc(b.videoUrl)}" download aria-label="Baixar"><span>${ic("i-down")}</span><small>Baixar</small></a>`}
       </div>
       <div class="reel-barra"><i></i></div>
@@ -3411,6 +3417,7 @@ reelBox.addEventListener("click", (e) => {
   }
   if (acao === "c-ant" || acao === "c-prox") { const t = $(".carro-trilho", sl); t.scrollBy({ left: (acao === "c-prox" ? 1 : -1) * t.clientWidth, behavior: "smooth" }); return; }
   if (acao === "detalhes" && sl.dataset.k !== "v") return abrirInfoArte(REEL_LISTA[+sl.dataset.i]);
+  if (acao === "arquivar" && sl.dataset.k === "v") { const b = BIB.find((y) => y.nome === nome); if (b) arquivarVideo(b, !b.ficha.arquivado, sl); return; }
   if (acao === "agendar" && sl.dataset.k !== "v") return abrirAgendarPeca(REEL_LISTA[+sl.dataset.i].p.it);
   // Info e Agendar abrem a folha por cima do vídeo; ao fechar, volta para o mesmo vídeo
   if (acao === "agendar" || acao === "detalhes") { v?.pause(); sl.classList.add("pausado"); return abrirVideo(nome, acao === "agendar"); }
@@ -3556,10 +3563,31 @@ function abrirVideo(nome, agendar = false, pre = null) {
     $("#gavCorpo").onclick = (e) => { if (e.target.closest("[data-imagina]")) { fecharGaveta(); pedirImaginaSe(nome); } };
     $("#ttOp").onclick = (e) => { const c = e.target.closest("[data-tt]"); if (c) marcarTikTok(b, c.dataset.tt); };
     $$("#gavCorpo [data-pm]").forEach((c) => { c.onclick = () => marcarPublicadoMao(b, c.dataset.pm, !!c.dataset.v); });
-    $("#gavPe").innerHTML = `<a class="btn fant" href="${esc(b.videoUrl)}" download>${ic("i-down")}Baixar</a><button class="btn pri" id="bAgenda">${ic("i-cal")}${st.s === "pronto" ? "Agendar" : "Agendar de novo"}</button>`;
+    const arq = !!f.arquivado;
+    $("#gavPe").innerHTML = `<a class="btn fant" href="${esc(b.videoUrl)}" download>${ic("i-down")}Baixar</a>${st.s === "agendado" ? "" : `<button class="btn fant" id="bArquivo">${ic("i-archive")}${arq ? "Desarquivar" : "Arquivar"}</button>`}<button class="btn pri" id="bAgenda">${ic("i-cal")}${st.s === "pronto" ? "Agendar" : "Agendar de novo"}</button>`;
     $("#bAgenda").onclick = () => abrirVideo(nome, true);
+    if ($("#bArquivo")) $("#bArquivo").onclick = () => arquivarVideo(b, !arq);
   }
   $("#veu").classList.add("on"); $("#gaveta").classList.add("on"); $("#gaveta").setAttribute("aria-hidden", "false"); travar();
+}
+
+/* arquivar: só marca na ficha (arquivado: true). O vídeo, a capa e a ficha continuam onde estão; sai dos Prontos e vai para Arquivados */
+async function arquivarVideo(b, sim, slide = null) {
+  if (!TOKEN) return toast("err", "Conecte o painel primeiro", "Clique em Conectar.");
+  const ficha = { ...b.ficha };
+  if (sim) { ficha.arquivado = true; ficha.arquivado_em = new Date().toISOString(); } else { delete ficha.arquivado; delete ficha.arquivado_em; }
+  try {
+    await commit(`Painel: ${sim ? "arquiva" : "desarquiva"} ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(ficha, null, 2) + "\n") }]);
+    b.ficha = ficha; desenharBiblioteca();
+    $("#navBib").textContent = BIB.filter((x) => statusBib(x).s === "pronto").length + pecasBib().filter((p) => p.s === "pronto").length;
+    if (VIEW === "cronograma") desenharCronograma();
+    if (slide) { // na tela cheia: fica no mesmo vídeo, só troca o botão e o selo
+      const bt = $('[data-r="arquivar"]', slide), rot = sim ? "Desarquivar" : "Arquivar";
+      if (bt) { bt.setAttribute("aria-label", rot); $("small", bt).textContent = rot; }
+      const ch = $(".reel-chips", slide); if (ch) ch.innerHTML = chipBib(statusBib(b));
+    } else if (sim) fecharGaveta(); else abrirVideo(b.nome);
+    toast("ok", sim ? "Vídeo arquivado" : "Vídeo de volta nos prontos", sim ? "Saiu dos prontos. Está em Arquivados, nada foi apagado." : "");
+  } catch (e) { toast("err", "Não salvou", e.message); }
 }
 
 async function marcarTikTok(b, status) {
@@ -4192,7 +4220,7 @@ async function escolherDaBiblioteca(k, hora, titulo) {
   const m = $("#modal");
   if (!bibCarregou) { m.innerHTML = `<div class="ic-topo">${ic("i-film", "i g")}</div><h2>Biblioteca</h2><p>Carregando os vídeos…</p>`; await carregarBiblioteca(); if (!$("#modal.on")) return; }
   const ordem = { pronto: 0, agendado: 1, publicado: 2 };
-  const lista = BIB.filter((b) => (b.ficha.tipo || "reel") === "reel" && b.videoUrl).map((b) => ({ b, st: statusBib(b) }))
+  const lista = BIB.filter((b) => (b.ficha.tipo || "reel") === "reel" && b.videoUrl).map((b) => ({ b, st: statusBib(b) })).filter((x) => x.st.s !== "arquivado")
     .sort((x, y) => ordem[x.st.s] - ordem[y.st.s]);
   const rot = (st) => st.s === "agendado" ? `Já agendado: ${F_COMPLETO.format(new Date(st.quando))}` : st.s === "publicado" ? "Já publicado" : "Pronto, sem agendar";
   const linha = ({ b, st }) => `<button class="bib-esc ${st.s}" data-bibesc="${esc(b.nome)}">

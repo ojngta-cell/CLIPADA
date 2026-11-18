@@ -79,6 +79,9 @@ alguma, a rede aparece com o aviso no fim da aba e o resto continua.
   `biblioteca`, fora do repositório. Para incluir um vídeo, envie `biblioteca/<nome>/video.mp4`,
   `capa.jpg` e `ficha.json` num ramo `entrada/<nome>`: o workflow `biblioteca.yml` sobe o vídeo
   para a Release, leva a ficha e a capa para a `main` e apaga o ramo.
+- Arquivar: no painel, abra o vídeo e toque em Arquivar. Só grava `"arquivado": true` na ficha;
+  o vídeo, a capa e a ficha continuam onde estão. Ele sai de Prontos e Todos (e do "Agendar tudo")
+  e fica no filtro Arquivados, de onde dá para desarquivar. O robô ignora esse campo.
 - `cronograma/cronograma.json`: o plano de conteúdo, editado pela aba Cronograma do painel.
 - `relogio.yml`: faz o robô publicar na hora certa, sem depender do cron do GitHub.
 
