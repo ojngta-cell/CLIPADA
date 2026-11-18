@@ -15,10 +15,34 @@ O repositório precisa ser público: o Instagram baixa as imagens pelo link
 
 Segredos (Settings > Secrets and variables > Actions): `META_TOKEN`,
 `FB_PAGE_ID`, `IG_USER_ID` (opcional), `YT_CLIENT_ID`, `YT_CLIENT_SECRET`,
-`YT_REFRESH_TOKEN`.
+`YT_REFRESH_TOKEN`, e `FB_PAGE_TOKEN` (opcional).
 
 Teste manual: aba Actions > Publicar posts > Run workflow, com modo `conexao`
-(confere os acessos) ou `verificar` (confere os posts sem publicar).
+(confere os acessos e mostra com qual app o Facebook publica), `verificar`
+(confere os posts sem publicar) ou `diagnostico` (só leitura: status e plays
+dos últimos reels da página).
+
+### Facebook (Reels)
+
+- O app da Meta que publica no Facebook precisa estar **Ao vivo** em
+  developers.facebook.com. Post feito por app em modo Desenvolvimento sai pela
+  API, mas ninguém vê (0 views). Sem CNPJ: app sem portfólio empresarial, caso
+  de uso "Gerenciar tudo na sua Página".
+- `FB_PAGE_TOKEN`: token de PÁGINA desse app publicado. Sem ele, o robô tira o
+  token da página do `META_TOKEN` (`GET /{FB_PAGE_ID}?fields=access_token`).
+  Gerar: Graph API Explorer (app certo) > token de usuário com
+  `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`,
+  `pages_read_user_content`, `pages_manage_metadata`, `read_insights` >
+  Estender (60 dias) > `GET me/accounts` > `access_token` da página. O token
+  cai se trocar a senha do Facebook ou sair de todas as sessões (erro 190).
+- Reel: `video_reels` start > envio ao rupload > finish com `video_state=PUBLISHED`.
+- Os segredos são lidos com `.strip()` e qualquer token é apagado das mensagens
+  de erro antes de gravar no `estado.json` (o repositório é público).
+- Antes de reenviar à mão, o workflow confere se já tem execução rodando ou na
+  fila, e sempre lê a ponta do ramo, para não postar duplicado.
+- Alcance: modo `diagnostico`, ou abrir
+  `facebook.com/plugins/video.php?href=<link do reel>` sem login. Se aparecer
+  "indisponível", o app não está publicado.
 
 ## Painel
 
