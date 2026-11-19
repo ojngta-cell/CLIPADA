@@ -22,5 +22,22 @@
     "status": "pedido",
     "quando": "2026-11-19T08:00:00-03:00",
     "em": "2026-11-19T10:21:10.677Z"
+  },
+  "publicado": {
+    "instagram": {
+      "id": "18138930191507397",
+      "em": "2026-11-19T11:02:13.241023+00:00",
+      "post": "2026-11-19-reel-clipada-g6-meikodrj-primeiro-bug-longa"
+    },
+    "facebook": {
+      "id": "122099535519555261",
+      "em": "2026-11-19T11:02:24.984794+00:00",
+      "post": "2026-11-19-reel-clipada-g6-meikodrj-primeiro-bug-longa"
+    },
+    "youtube": {
+      "id": "B92ZfSKAnGo",
+      "em": "2026-11-19T11:02:27.623545+00:00",
+      "post": "2026-11-19-reel-clipada-g6-meikodrj-primeiro-bug-longa"
+    }
   }
 }
