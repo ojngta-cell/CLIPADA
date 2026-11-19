@@ -62,6 +62,24 @@ button { font: inherit; color: inherit; }
 .vid .capa { position: relative; aspect-ratio: 9/16; background: var(--surface-2) center/cover no-repeat; overflow: hidden; }
 .vid .capa video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s; }
 .vid .capa video.on { opacity: 1; }
+/* seleção de vários vídeos */
+.vid .marca { position: absolute; right: 10px; top: 10px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,.35); display: none; place-items: center; color: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.4); }
+.vid .marca svg.i { width: 16px; height: 16px; stroke-width: 3; opacity: 0; }
+.selecionando .vid[data-bib] .marca { display: grid; }
+.selecionando .vid[data-bib].sel .marca { background: var(--teal); border-color: var(--teal); }
+.selecionando .vid[data-bib].sel .marca svg.i { opacity: 1; }
+.selecionando .vid[data-bib].sel { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal); }
+.selecionando .vid:not([data-bib]), .selecionando .vid.st-agendado { opacity: .45; }
+.selecionando .vid:hover { transform: none; }
+.selecionando .vid .capa .play { display: none; }
+.bib-sel-barra { position: fixed; z-index: 60; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(560px, calc(100% - 32px)); display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: 18px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--border-strong); box-shadow: var(--shadow), 0 18px 40px -18px rgba(0,0,0,.5); }
+.bib-sel-barra[hidden] { display: none; }
+.bib-sel-barra b { flex: 1; font-size: 14px; line-height: 1.2; }
+.bib-sel-barra .btn { flex: none; }
+.bib-sel-barra #bibSelX { padding-left: 10px; padding-right: 10px; }
+@media (max-width: 760px) { .bib-sel-barra { bottom: calc(96px + env(safe-area-inset-bottom)); } }
+.bib-acoes { display: flex; gap: 10px; margin: 0 0 16px; }
+.bib-acoes #bibAuto { flex: 1; margin: 0 !important; }
 .vid .capa::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,.7)); pointer-events: none; }
 .vid .capa .tag { position: absolute; left: 10px; top: 10px; z-index: 1; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; backdrop-filter: blur(8px); }
 .vid .capa .play { position: absolute; left: 50%; top: 50%; z-index: 1; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; backdrop-filter: blur(8px); transition: transform .35s var(--spring), opacity .3s; }
@@ -906,8 +924,22 @@ html.com-reels .gaveta .det-topo { grid-template-columns: minmax(0, 1fr); }
 .reel-acoes svg.i { width: 24px; height: 24px; }
 .reel-acoes small { font-size: 11.5px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
 .reel-acoes [data-r="agendar"] span { background: linear-gradient(135deg, var(--teal), var(--teal-2)); border-color: transparent; }
-.reel-barra { position: absolute; z-index: 2; left: 0; right: 0; bottom: env(safe-area-inset-bottom); height: 3px; background: rgba(255,255,255,.2); }
-.reel-barra i { display: block; height: 100%; width: 0; background: #fff; transition: width .25s linear; }
+/* barra de andamento: área de toque alta, trilho fino; arrastar avança ou volta */
+.reel-barra { position: absolute; z-index: 3; left: 0; right: 0; bottom: env(safe-area-inset-bottom); height: 22px; display: flex; align-items: flex-end; cursor: pointer; touch-action: none; }
+.reel-barra::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.2); transition: height .15s; }
+.reel-barra i { position: relative; display: block; height: 3px; width: 0; background: #fff; transition: width .25s linear, height .15s; }
+.reel-barra i::after { content: ""; position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: #fff; transform: scale(0); transition: transform .15s; }
+.reel-barra:hover::before, .reel-barra:hover i, .reel-barra.arrastando::before, .reel-barra.arrastando i { height: 6px; }
+.reel-barra:hover i::after, .reel-barra.arrastando i::after { transform: scale(1); }
+.reel-barra.arrastando i { transition: none; }
+.reel-barra b { position: absolute; left: 50%; bottom: 42dvh; transform: translateX(-50%); font: 700 22px/1 system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 7px 12px; border-radius: 99px; background: rgba(0,0,0,.6); opacity: 0; transition: opacity .15s; pointer-events: none; white-space: nowrap; }
+.reel-barra.arrastando b { opacity: 1; }
+.reel-palco { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* 2x: segurar no canto esquerdo ou direito do vídeo */
+.reel-2x { position: absolute; z-index: 3; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%) scale(.9); display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 99px; background: rgba(0,0,0,.55); font: 700 14px/1 system-ui, sans-serif; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none; }
+.reel-2x svg.i { width: 16px; height: 16px; fill: #fff; stroke: none; }
+.reel.rapido .reel-2x { opacity: 1; transform: translateX(-50%); }
+.reel.rapido .reel-pausa { opacity: 0; }
 /* números como no Instagram: nos cartões e na coluna da direita do vídeo */
 .ig-nums { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .ig-nums span { display: inline-flex; align-items: center; gap: 5px; }
@@ -1402,8 +1434,9 @@ button.ei-passo:active { transform: scale(.98); }
           <option value="recentes">Mais recentes</option><option value="antigos">Mais antigos</option>
         </select></label>
       </div>
-      <button class="btn pri" id="bibAuto" style="width:100%;margin:0 0 16px">Agendar tudo pelo cronograma</button>
+      <div class="bib-acoes"><button class="btn pri" id="bibAuto">Agendar tudo pelo cronograma</button><button class="btn" id="bibSel">Selecionar</button></div>
       <div id="bibLista"></div>
+      <div class="bib-sel-barra" id="bibSelBarra" hidden><b id="bibSelN">0 selecionados</b><button class="btn peq fant" id="bibSelTodos">Marcar todos</button><button class="btn peq pri" id="bibSelOk">Arquivar</button><button class="btn peq fant" id="bibSelX" aria-label="Cancelar seleção"><svg class="i"><use href="#i-x"/></svg></button></div>
       <div class="arte-vista" id="arteVista" hidden role="dialog" aria-modal="true" aria-label="Arte">
         <div class="av-topo"><div class="av-tit"><b id="arteTit"></b><span id="arteCont"></span></div><button class="av-btn" data-arte-fecha aria-label="Fechar">×</button></div>
         <div class="av-palco"><button class="av-btn av-ant" data-arte-ant id="artePrev" aria-label="Arte anterior">‹</button><img id="arteImg" alt=""><button class="av-btn av-prox" data-arte-prox id="arteProx" aria-label="Próxima arte">›</button></div>
@@ -3050,8 +3083,9 @@ function desenharBiblioteca() {
     const q = quandoBib(b);
     if (!passa(bibCategoriaDe(b), q)) return;
     const f = b.ficha, st = statusBib(b), nb = st.s === "publicado" ? numerosBib(b) : null;
-    itens.push({ q, feed: b.videoUrl ? { k: "v", chave: "v:" + b.nome, nome: b.nome } : null, html: `<div class="card vid st-${st.s}" data-bib="${esc(b.nome)}" ${b.videoUrl ? `data-feed="${esc("v:" + b.nome)}"` : ""}>
+    itens.push({ q, feed: b.videoUrl ? { k: "v", chave: "v:" + b.nome, nome: b.nome } : null, html: `<div class="card vid st-${st.s}${BIB_SEL?.has(b.nome) ? " sel" : ""}" data-bib="${esc(b.nome)}" ${b.videoUrl ? `data-feed="${esc("v:" + b.nome)}"` : ""}>
       <div class="capa" style="background-image:url('${esc(b.capaUrl)}')">
+        <span class="marca">${ic("i-check")}</span>
         <span class="tag">${esc(NOMES_TIPO[f.tipo] || "Reel")}</span>
         ${b.videoUrl ? `<video muted playsinline loop preload="none" data-src="${esc(b.videoUrl)}"></video><span class="play">${ic("i-play")}</span>` : ""}
         <span class="dur">${esc(duracao(f.duracao))}</span>
@@ -3090,6 +3124,7 @@ function desenharBiblioteca() {
   const vistos = new Set(); REEL_LISTA = [];
   itens.forEach((i) => { if (i.feed && !vistos.has(i.feed.chave)) { vistos.add(i.feed.chave); REEL_LISTA.push(i.feed); } });
   alvo.innerHTML = `<div class="vids stagger">${itens.map((i) => i.html).join("")}</div>`;
+  barraSelecao();
 }
 /* arte da pasta producao/ convertida para JPG (o Instagram não aceita PNG) */
 async function artePraJpg(url) {
@@ -3190,6 +3225,48 @@ async function agendarAutomatico() {
   } finally { btn.disabled = false; btn.textContent = texto; }
 }
 $("#bibAuto").addEventListener("click", agendarAutomatico);
+/* selecionar vários vídeos e arquivar (ou desarquivar, no filtro Arquivados) de uma vez, num commit só */
+let BIB_SEL = null;
+document.body.appendChild($("#bibSelBarra")); // fora da seção: a animação da aba prenderia o position: fixed
+function selecionaveis() { return $$("#bibLista .vid[data-bib]").map((c) => c.dataset.bib).filter((n) => { const b = BIB.find((y) => y.nome === n); return b && statusBib(b).s !== "agendado"; }); }
+function barraSelecao() {
+  const on = !!BIB_SEL;
+  $("#v-biblioteca").classList.toggle("selecionando", on);
+  $("#bibSelBarra").hidden = !on; $("#bibSel").textContent = on ? "Cancelar seleção" : "Selecionar";
+  if (!on) return;
+  const n = BIB_SEL.size, todos = selecionaveis();
+  $("#bibSelN").textContent = n === 0 ? "Toque nos vídeos" : n === 1 ? "1 selecionado" : `${n} selecionados`;
+  $("#bibSelOk").textContent = BIB_FILTRO === "arquivados" ? "Desarquivar" : "Arquivar";
+  $("#bibSelOk").disabled = !n;
+  $("#bibSelTodos").textContent = todos.length && todos.every((x) => BIB_SEL.has(x)) ? "Desmarcar todos" : "Marcar todos";
+}
+function sairSelecao() { BIB_SEL = null; $$("#bibLista .vid.sel").forEach((c) => c.classList.remove("sel")); barraSelecao(); }
+$("#bibSel").addEventListener("click", () => { if (BIB_SEL) return sairSelecao(); BIB_SEL = new Set(); barraSelecao(); });
+$("#bibSelX").addEventListener("click", sairSelecao);
+$("#bibSelTodos").addEventListener("click", () => {
+  const todos = selecionaveis(), tudo = todos.length && todos.every((x) => BIB_SEL.has(x));
+  todos.forEach((x) => (tudo ? BIB_SEL.delete(x) : BIB_SEL.add(x)));
+  $$("#bibLista .vid[data-bib]").forEach((c) => c.classList.toggle("sel", BIB_SEL.has(c.dataset.bib))); barraSelecao();
+});
+$("#bibSelOk").addEventListener("click", async () => {
+  if (!TOKEN) return toast("err", "Conecte o painel primeiro", "Clique em Conectar.");
+  const sim = BIB_FILTRO !== "arquivados";
+  const lista = [...BIB_SEL].map((n) => BIB.find((y) => y.nome === n)).filter((b) => b && statusBib(b).s !== "agendado");
+  if (!lista.length) return;
+  const btn = $("#bibSelOk"), texto = btn.textContent; btn.disabled = true; btn.textContent = "Salvando…";
+  const em = new Date().toISOString();
+  const fichas = lista.map((b) => { const f = { ...b.ficha }; if (sim) { f.arquivado = true; f.arquivado_em = em; } else { delete f.arquivado; delete f.arquivado_em; } return [b, f]; });
+  try {
+    await commit(`Painel: ${sim ? "arquiva" : "desarquiva"} ${lista.length} vídeo${lista.length > 1 ? "s" : ""} da biblioteca`,
+      fichas.map(([b, f]) => ({ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(f, null, 2) + "\n") })));
+    fichas.forEach(([b, f]) => (b.ficha = f));
+    BIB_SEL = null; desenharBiblioteca();
+    $("#navBib").textContent = BIB.filter((x) => statusBib(x).s === "pronto").length + pecasBib().filter((p) => p.s === "pronto").length;
+    if (VIEW === "cronograma") desenharCronograma();
+    const n = lista.length === 1 ? "1 vídeo" : `${lista.length} vídeos`;
+    toast("ok", sim ? `${n} arquivado${lista.length > 1 ? "s" : ""}` : `${n} de volta nos prontos`, sim ? "Estão em Arquivados, nada foi apagado." : "");
+  } catch (e) { toast("err", "Não salvou", e.message); btn.disabled = false; btn.textContent = texto; }
+});
 $(".bib-filtros").addEventListener("change", (e) => {
   const s = e.target;
   if (s.id === "bibCat") BIB_CAT = s.value;
@@ -3201,6 +3278,7 @@ $(".bib-filtros").addEventListener("change", (e) => {
 $("#bibFiltros").addEventListener("click", (e) => {
   const b = e.target.closest("[data-bf]"); if (!b) return;
   BIB_FILTRO = b.dataset.bf; $$("#bibFiltros [data-bf]").forEach((x) => x.classList.toggle("ativo", x === b));
+  if (BIB_SEL) BIB_SEL.clear(); // arquivar e desarquivar não se misturam
   moverIndicador($("#bibFiltros"), $("#bibFiltros .ind"), b); desenharBiblioteca();
 });
 // prévia: o vídeo toca quando o mouse passa por cima
@@ -3223,6 +3301,13 @@ $("#bibLista").addEventListener("pointerdown", (e) => {
   setTimeout(() => { if (AQUECIDO === v) { AQUECIDO = null; v.removeAttribute("src"); v.load(); } }, 2500); // foi só rolagem: para de baixar
 }, { passive: true });
 $("#bibLista").addEventListener("click", (e) => {
+  if (BIB_SEL) { // modo seleção: tocar no cartão marca ou desmarca
+    const c = e.target.closest("[data-bib]"); if (!c) return;
+    const b = BIB.find((y) => y.nome === c.dataset.bib); if (!b) return;
+    if (statusBib(b).s === "agendado") return toast("info", "Esse está agendado", "Tire da agenda antes de arquivar.");
+    BIB_SEL.has(b.nome) ? BIB_SEL.delete(b.nome) : BIB_SEL.add(b.nome);
+    c.classList.toggle("sel", BIB_SEL.has(b.nome)); barraSelecao(); return;
+  }
   const f = e.target.closest("[data-feed]"); if (f) return abrirReels(f.dataset.feed, +(f.dataset.idx || 0));
   const c = e.target.closest("[data-bib]"); if (c) return abrirVideo(c.dataset.bib);
   const a = e.target.closest("[data-peca]"); if (a) abrirArte(a.dataset.peca, +a.dataset.idx);
@@ -3250,7 +3335,7 @@ function slideReel(en, i) {
   return `<section class="reel" data-i="${i}" data-k="v" data-nome="${esc(nome)}">
     <div class="reel-palco">
       <video loop playsinline preload="none" data-src="${esc(b.videoUrl)}" ${b.capaUrl ? `poster="${esc(b.capaUrl)}"` : ""}></video>
-      <span class="reel-pausa">${ic("i-play")}</span><span class="reel-carrega"></span>
+      <span class="reel-pausa">${ic("i-play")}</span><span class="reel-carrega"></span><span class="reel-2x">2x ${ic("i-play")}${ic("i-play")}</span>
       <div class="reel-info">
         ${n ? perfilReel(em) : ""}
         <div class="reel-chips">${chipBib(st)}</div>
@@ -3266,7 +3351,7 @@ function slideReel(en, i) {
         ${st.s === "agendado" ? "" : `<button data-r="arquivar" aria-label="${f.arquivado ? "Desarquivar" : "Arquivar"}"><span>${ic("i-archive")}</span><small>${f.arquivado ? "Desarquivar" : "Arquivar"}</small></button>`}
         ${n ? "" : `<a href="${esc(b.videoUrl)}" download aria-label="Baixar"><span>${ic("i-down")}</span><small>Baixar</small></a>`}
       </div>
-      <div class="reel-barra"><i></i></div>
+      <div class="reel-barra"><i></i><b></b></div>
     </div>
   </section>`;
 }
@@ -3298,7 +3383,7 @@ function slidePost(en, i) {
         ${video ? `<button data-r="som" aria-label="Som"><span>${ic(REEL_SOM ? "i-vol" : "i-mudo")}</span><small>${REEL_SOM ? "Som" : "Mudo"}</small></button>` : ""}
         <button data-r="detalhes" aria-label="Informações"><span>${ic("i-info")}</span><small>Info</small></button>
       </div>
-      ${video ? `<div class="reel-barra"><i></i></div>` : ""}
+      ${video ? `<div class="reel-barra"><i></i><b></b></div>` : ""}
     </div>
   </section>`;
 }
@@ -3393,6 +3478,8 @@ addEventListener("popstate", () => {
   fecharReels(true);
 });
 reelBox.addEventListener("click", (e) => {
+  if (e.target.closest(".reel-barra")) return; // a barra cuida de si
+  if (Date.now() < SEM_CLIQUE_ATE) return; // acabou de soltar o 2x: não pausa
   const el = e.target.closest("[data-r]"), sl = e.target.closest(".reel");
   const nome = sl?.dataset.nome, v = sl && $("video", sl);
   const acao = el?.dataset.r;
@@ -3455,12 +3542,63 @@ async function abrirInfoArte(en) {
 }
 $("#reelsTrilho").addEventListener("timeupdate", (e) => {
   const v = e.target; if (!v.duration) return;
-  const barra = v.closest(".reel")?.querySelector(".reel-barra i"); if (barra) barra.style.width = `${(v.currentTime / v.duration) * 100}%`;
+  const br = v.closest(".reel")?.querySelector(".reel-barra"); if (!br || br.classList.contains("arrastando")) return;
+  $("i", br).style.width = `${(v.currentTime / v.duration) * 100}%`;
 }, true);
+/* barra de andamento: tocar ou arrastar leva o vídeo para aquele ponto */
+const mmss = (t) => { t = Math.max(0, Math.floor(t || 0)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
+let ARRASTO = null;
+function posBarra(e) {
+  const { br, v } = ARRASTO, r = br.getBoundingClientRect();
+  const k = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  $("i", br).style.width = `${k * 100}%`;
+  if (v.duration) { v.currentTime = k * v.duration; $("b", br).textContent = `${mmss(k * v.duration)} / ${mmss(v.duration)}`; }
+}
+reelBox.addEventListener("pointerdown", (e) => {
+  const br = e.target.closest(".reel-barra"); if (!br) return;
+  const v = $("video", br.closest(".reel")); if (!v) return;
+  e.preventDefault(); e.stopPropagation();
+  ARRASTO = { br, v, tocava: !v.paused, id: e.pointerId }; br.setPointerCapture(e.pointerId); br.classList.add("arrastando");
+  posBarra(e);
+});
+reelBox.addEventListener("pointermove", (e) => { if (ARRASTO && e.pointerId === ARRASTO.id) posBarra(e); });
+const soltaBarra = (e) => { if (!ARRASTO || e.pointerId !== ARRASTO.id) return; ARRASTO.br.classList.remove("arrastando"); ARRASTO = null; };
+reelBox.addEventListener("pointerup", soltaBarra); reelBox.addEventListener("pointercancel", soltaBarra);
+/* 2x: segurar no terço esquerdo ou direito do vídeo acelera; soltar volta ao normal (como no Instagram) */
+let SEGURA = null, SEM_CLIQUE_ATE = 0;
+reelBox.addEventListener("pointerdown", (e) => {
+  if (e.button > 0 || e.target.closest(".reel-barra, .reel-acoes, .reel-info, a, button, .carro-trilho")) return;
+  const palco = e.target.closest(".reel-palco"), sl = palco?.closest(".reel"), v = sl && $("video", sl);
+  if (!v) return;
+  const r = palco.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+  if (x > 0.3 && x < 0.7) return; // o meio continua sendo pausar
+  const id = e.pointerId, x0 = e.clientX, y0 = e.clientY;
+  SEGURA = { id, x0, y0, v, sl, rapido: false, t: setTimeout(() => {
+    if (!SEGURA || SEGURA.id !== id) return;
+    SEGURA.rapido = true; v.playbackRate = 2; sl.classList.add("rapido");
+    if (v.paused) { v.play().catch(() => {}); sl.classList.remove("pausado"); }
+  }, 280) };
+});
+reelBox.addEventListener("pointermove", (e) => {
+  if (!SEGURA || e.pointerId !== SEGURA.id || SEGURA.rapido) return;
+  if (Math.abs(e.clientX - SEGURA.x0) + Math.abs(e.clientY - SEGURA.y0) > 12) { clearTimeout(SEGURA.t); SEGURA = null; } // está rolando
+});
+const soltaSegura = (e) => {
+  if (!SEGURA || e.pointerId !== SEGURA.id) return;
+  clearTimeout(SEGURA.t);
+  if (SEGURA.rapido) { SEGURA.v.playbackRate = 1; SEGURA.sl.classList.remove("rapido"); SEM_CLIQUE_ATE = Date.now() + 400; }
+  SEGURA = null;
+};
+reelBox.addEventListener("pointerup", soltaSegura); reelBox.addEventListener("pointercancel", soltaSegura);
+reelBox.addEventListener("contextmenu", (e) => { if (e.target.closest(".reel-palco")) e.preventDefault(); }); // segurar não abre o menu do celular
 addEventListener("keydown", (e) => {
   if (reelBox.hidden || $("#gaveta.on") || $("#modal.on")) return;
   if (e.key === "Escape" && $("#reelsFolha.on")) { e.stopPropagation(); return fecharFolhaNumeros(); }
   if (e.key === "Escape") fecharReels();
+  else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const v = $(`#reelsTrilho .reel[data-i="${REEL_ATUAL}"] video`); if (!v?.duration) return;
+    e.preventDefault(); v.currentTime = Math.min(v.duration, Math.max(0, v.currentTime + (e.key === "ArrowRight" ? 5 : -5)));
+  }
   else if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); passarReel(1); }
   else if (e.key === "ArrowUp" || e.key === "k") { e.preventDefault(); passarReel(-1); }
   else if (e.key === "ArrowRight" || e.key === "ArrowLeft") { $(`#reelsTrilho .reel[data-i="${REEL_ATUAL}"] [data-r="${e.key === "ArrowRight" ? "c-prox" : "c-ant"}"]`)?.click(); }
@@ -4811,6 +4949,7 @@ async function pedirImaginaSe(nome) {
 function irPara(v) {
   if (!$("#reels")?.hidden) fecharReels();
   if (["agenda", "biblioteca", "cronograma", "analises", "catalogo", "robo"].includes(v) || v === "inicio") local.set("painel-aba", v);
+  if (v !== VIEW && BIB_SEL) sairSelecao(); // saiu da Biblioteca: acaba a seleção
   if (v !== VIEW) { VIEW = v; $$(".view").forEach((s) => s.classList.toggle("ativa", s.id === "v-" + v)); window.scrollTo({ top: 0 }); }
   $$("#nav [data-view], #tabbar [data-view], #maisFolha [data-view], .novo-lat").forEach((b) => b.classList.toggle("ativo", b.dataset.view === v));
   abrirMais(false); $("#tabbar").classList.remove("escondida");
