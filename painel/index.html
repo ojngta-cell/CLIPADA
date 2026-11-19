@@ -1790,7 +1790,9 @@ async function gh(caminho, op = {}) {
   const cab = { Accept: op.raw ? "application/vnd.github.raw" : "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
   if (TOKEN) cab.Authorization = `Bearer ${TOKEN}`;
   if (op.corpo) cab["Content-Type"] = "application/json";
-  const r = await fetch(caminho.startsWith("http") ? caminho : API + caminho, { method: op.metodo || "GET", headers: cab, body: op.corpo ? JSON.stringify(op.corpo) : undefined, cache: "no-store" });
+  const corpo = op.corpo ? JSON.stringify(op.corpo) : undefined;
+  // keepalive: gravar (arquivar, agendar...) termina mesmo se o celular tirar o app da tela no meio
+  const r = await fetch(caminho.startsWith("http") ? caminho : API + caminho, { method: op.metodo || "GET", headers: cab, body: corpo, cache: "no-store", keepalive: !!corpo && corpo.length < 60000 });
   if (!r.ok) {
     let msg = r.statusText; try { msg = (await r.json()).message || msg; } catch {}
     if (r.status === 401) msg = "o token não vale mais. Cole um novo em Conectar";
@@ -2661,10 +2663,11 @@ async function rodar(modo, reenviar = "") {
   try {
     const wf = modo === "analises" ? "analises.yml" : WORKFLOW;
     await gh(`/actions/workflows/${wf}/dispatches`, { metodo: "POST", corpo: modo === "analises" ? { ref: RAMO } : { ref: RAMO, inputs: reenviar ? { modo, reenviar } : { modo } } });
-    desenharTrilha(1); $("#saida").textContent = "esperando o GitHub começar…"; if (inline) progressoAnalises(1);
+    if (inline) { local.set("painel-an-pedido", inicio.toISOString()); progressoAnalises(1); return await acompanharAnalises(inicio); }
+    desenharTrilha(1); $("#saida").textContent = "esperando o GitHub começar…";
     let run = null;
     for (let i = 0; i < 100; i++) {
-      await new Promise((ok) => setTimeout(ok, i < 5 ? 3000 : 5000));
+      await espera(i < 5 ? 3000 : 5000);
       if (!run) { run = ((await gh(`/actions/workflows/${wf}/runs?event=workflow_dispatch&per_page=5`)).workflow_runs || []).find((r) => new Date(r.created_at) >= inicio) || null; }
       else run = await gh(`/actions/runs/${run.id}`);
       if (run) { $("#execLink").href = run.html_url; $("#execLink").classList.remove("oculto"); }
@@ -2689,6 +2692,40 @@ async function rodar(modo, reenviar = "") {
     if (inline) progressoAnalises(-1, "", `Não rodou: ${e.message}`);
   } finally { rodando = false; }
 }
+
+/* espera que acorda na hora quando o app volta para a tela (o celular congela os relógios em segundo plano) */
+let acordar = null;
+function espera(ms) { return new Promise((ok) => { const t = setTimeout(ok, ms); acordar = () => { clearTimeout(t); acordar = null; ok(); }; }); }
+/* acompanha a coleta das análises no GitHub. A coleta roda lá (uns 40 s) mesmo com o app fechado;
+   o pedido fica guardado no navegador, então ao voltar ou reabrir o app ele continua daqui */
+async function acompanharAnalises(inicio) {
+  const wf = "analises.yml", limite = inicio.getTime() + 10 * 60000;
+  let run = null;
+  while (Date.now() < limite) {
+    await espera(run ? 3000 : 2000);
+    if (!run) run = ((await gh(`/actions/workflows/${wf}/runs?event=workflow_dispatch&per_page=5`)).workflow_runs || []).find((x) => new Date(x.created_at) >= inicio) || null;
+    else run = await gh(`/actions/runs/${run.id}`);
+    if (run && run.status === "in_progress") progressoAnalises(2, run.html_url);
+    if (run && run.status === "completed") break;
+  }
+  if (!run || run.status !== "completed") { local.set("painel-an-pedido", ""); progressoAnalises(-1, run?.html_url, "Está demorando mais que o normal. Os números aparecem aqui quando a coleta terminar."); return; }
+  local.set("painel-an-pedido", "");
+  carregarRuns();
+  if (run.conclusion !== "success") { progressoAnalises(-1, run.html_url, "A coleta deu erro. Os números de antes continuam aqui."); toast("err", "Não deu para atualizar os números", "Toque em Ver no GitHub para saber o que houve."); return; }
+  progressoAnalises(3); AN = null; await carregarAnalises(); progressoAnalises(4);
+  toast("ok", "Números atualizados", "");
+}
+async function retomarAnalises() {
+  const ped = local.get("painel-an-pedido"); if (!ped || rodando || !TOKEN) return;
+  const inicio = new Date(ped);
+  if (isNaN(inicio) || Date.now() - inicio > 10 * 60000) { local.set("painel-an-pedido", ""); return; }
+  rodando = true; progressoAnalises(1);
+  try { await acompanharAnalises(inicio); }
+  catch (e) { progressoAnalises(-1, "", `Não consegui acompanhar: ${e.message}`); }
+  finally { rodando = false; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { acordar?.(); retomarAnalises(); } });
+setTimeout(retomarAnalises, 1200); // reabriu o app no meio de uma coleta
 
 /* ================================================================ conta (token) */
 function faixaToken() {
