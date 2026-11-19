@@ -47,6 +47,10 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; }
+/* listas (select): no Windows o menu aberto usa fundo branco do sistema; aqui ele segue o tema do painel */
+select option, select optgroup { background-color: var(--surface-solid); color: var(--text); }
+select option:checked { background-color: var(--teal-2); color: #fff; }
+select option:disabled { color: var(--faint); }
 body { background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; }
 h1, h2, h3, .display { font-family: Fredoka, Inter, sans-serif; letter-spacing: -.01em; margin: 0; }
 a { color: var(--teal); }
