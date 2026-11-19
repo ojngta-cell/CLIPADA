@@ -1812,14 +1812,22 @@ function commit(...args) {
 }
 async function commitAgora(mensagem, arquivos, apagar = [], progresso = () => {}) {
   if (!TOKEN) throw new Error("conecte o painel ao GitHub primeiro");
-  const entradas = [], total = arquivos.length + 2;
-  for (const [i, a] of arquivos.entries()) {
-    progresso(i / total, `Enviando ${a.caminho.split("/").pop()}…`);
-    const blob = await gh("/git/blobs", { metodo: "POST", corpo: { content: a.base64, encoding: "base64" } });
-    entradas.push({ path: a.caminho, mode: "100644", type: "blob", sha: blob.sha });
-  }
+  const entradas = [], binarios = arquivos.filter((a) => a.texto === undefined), total = binarios.length + 2;
+  // texto (fichas, posts, cronograma) vai direto na árvore: um pedido só, por mais arquivos que sejam
+  for (const a of arquivos) if (a.texto !== undefined) entradas.push({ path: a.caminho, mode: "100644", type: "blob", content: a.texto });
+  // imagens e vídeos sobem em paralelo, até 4 de cada vez
+  let feitos = 0, prox = 0;
+  const sobe = async () => {
+    while (prox < binarios.length) {
+      const a = binarios[prox++];
+      progresso(feitos / total, `Enviando ${a.caminho.split("/").pop()}…`);
+      const blob = await gh("/git/blobs", { metodo: "POST", corpo: { content: a.base64, encoding: "base64" } });
+      entradas.push({ path: a.caminho, mode: "100644", type: "blob", sha: blob.sha }); feitos++;
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(4, binarios.length) }, sobe));
   for (const c of apagar) entradas.push({ path: c, mode: "100644", type: "blob", sha: null });
-  progresso(arquivos.length / total, "Gravando na agenda…");
+  progresso(binarios.length / total, "Gravando…");
   for (let t = 1; ; t++) {
     const ref = await gh(`/git/ref/heads/${RAMO}`);
     const base = await gh(`/git/commits/${ref.object.sha}`);
@@ -2312,9 +2320,9 @@ async function salvarEdicao(x) {
   const planoMudou = cronoCarregou ? sincronizarPlano(novos) : [];
   const b = $("#eSalva"); b.disabled = true; b.classList.add("gira"); b.innerHTML = `${ic("i-refresh")}Salvando…`;
   try {
-    await commit(`Painel: edita ${x.pasta}${juntos.length ? ` e leva ${juntos.length} junto` : ""}`, [{ caminho: `agenda/${x.pasta}/post.json`, base64: b64Texto(JSON.stringify(ordenar(post), null, 2) + "\n") },
-      ...juntos.map((j) => ({ caminho: `agenda/${j.pasta}/post.json`, base64: b64Texto(JSON.stringify(j.post, null, 2) + "\n") })),
-      ...(planoMudou.length ? [{ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") }] : [])]);
+    await commit(`Painel: edita ${x.pasta}${juntos.length ? ` e leva ${juntos.length} junto` : ""}`, [{ caminho: `agenda/${x.pasta}/post.json`, texto: JSON.stringify(ordenar(post), null, 2) + "\n" },
+      ...juntos.map((j) => ({ caminho: `agenda/${j.pasta}/post.json`, texto: JSON.stringify(j.post, null, 2) + "\n" })),
+      ...(planoMudou.length ? [{ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" }] : [])]);
     toast("ok", mudouDia ? `Foi para ${rotuloQuando(data, hora)}` : "Mudanças salvas", [juntos.length ? `mais ${juntos.length} do mesmo dia junto` : "", planoMudou.length ? "plano atualizado" : ""].filter(Boolean).join(" · ") || x.pasta); fecharGaveta(); carregarAgenda(); desenharCronograma();
   } catch (e) {
     planoMudou.forEach(([it, antes]) => { Object.keys(it).forEach((c) => delete it[c]); Object.assign(it, JSON.parse(antes)); });
@@ -2336,7 +2344,7 @@ async function apagarPost(x) {
     if (manterNoPlano) { if (it.status === "agendado") it.status = "pronto"; }
     else { CRONO.itens = CRONO.itens.filter((y) => y.id !== it.id); dispensar([it]); }
   }
-  const plano = tiraPlano ? [{ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") }] : [];
+  const plano = tiraPlano ? [{ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" }] : [];
   try {
     toast("info", "Apagando…", x.pasta, 3000);
     const sha = await commit(`Painel: remove ${x.pasta} da agenda${tiraPlano && !manterNoPlano ? " e do plano" : ""}`, plano, x.arquivos.filter((a) => a.path).map((a) => a.path));
@@ -2550,7 +2558,7 @@ async function agendar() {
     const lista = [];
     for (const [i, m] of NOVO.midias.entries()) { const a = await prepararArquivo(m.file); if (a.tamanho > 95 * 1048576) throw new Error(`${n.midias[i]} passa de 95 MB`); lista.push({ caminho: `agenda/${pasta}/${n.midias[i]}`, base64: a.base64 }); }
     if (NOVO.capa) lista.push({ caminho: `agenda/${pasta}/${n.capa}`, base64: (await prepararArquivo(NOVO.capa.file)).base64 });
-    lista.push({ caminho: `agenda/${pasta}/post.json`, base64: b64Texto(JSON.stringify(post, null, 2) + "\n") });
+    lista.push({ caminho: `agenda/${pasta}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" });
     await commit(`Painel: agenda ${pasta}`, lista, [], prog);
     $("#sucessoTxt").textContent = `${NOMES_TIPO[post.tipo]} agendado para ${nomeDia(new Date(post.quando)).toLowerCase()}, ${F_HORA.format(new Date(post.quando))}.`;
     irEtapa(ETAPAS); confete(); carregarAgenda();
@@ -3202,7 +3210,7 @@ async function agendarAutomatico() {
           ...(f.titulo_youtube ? { titulo_youtube: f.titulo_youtube } : {}),
           ...(f.ia ? { ia: true } : {}), biblioteca: pl.b.nome });
         const pasta = nomePasta(`${pl.it.data}-${post.tipo}-${pl.b.nome}`);
-        arquivos.push({ caminho: `agenda/${pasta}/post.json`, base64: b64Texto(JSON.stringify(post, null, 2) + "\n") });
+        arquivos.push({ caminho: `agenda/${pasta}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" });
         ligarNoCronograma(pl.b, pl.it.data);
       } else {
         const curto = pl.pasta.replace(/^\d{4}-\d\d-\d\d-/, "");
@@ -3212,11 +3220,11 @@ async function agendarAutomatico() {
         let legenda = "";
         if (pl.tipo === "carrossel") { if (!(pl.pasta in legendas)) legendas[pl.pasta] = await legendaDaProducao(pl.pasta); legenda = legendas[pl.pasta]; }
         const post = ordenar({ quando: pl.quando, tipo: pl.tipo, redes: pl.redes, legenda, midias, origem: `producao/${pl.pasta}` });
-        arquivos.push({ caminho: `agenda/${pasta}/post.json`, base64: b64Texto(JSON.stringify(post, null, 2) + "\n") });
+        arquivos.push({ caminho: `agenda/${pasta}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" });
         pl.it.status = "agendado";
       }
     }
-    arquivos.push({ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") });
+    arquivos.push({ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" });
     await commit(`Painel: agenda ${planos.length} posts da biblioteca pelo cronograma`, arquivos, [], (f, m) => { btn.textContent = m; });
     toast("ok", "Tudo agendado", `${planos.length} ${planos.length === 1 ? "post" : "posts"} no robô`); confete();
     await carregarAgenda(); desenharBiblioteca();
@@ -3253,19 +3261,17 @@ $("#bibSelOk").addEventListener("click", async () => {
   const sim = BIB_FILTRO !== "arquivados";
   const lista = [...BIB_SEL].map((n) => BIB.find((y) => y.nome === n)).filter((b) => b && statusBib(b).s !== "agendado");
   if (!lista.length) return;
-  const btn = $("#bibSelOk"), texto = btn.textContent; btn.disabled = true; btn.textContent = "Salvando…";
   const em = new Date().toISOString();
-  const fichas = lista.map((b) => { const f = { ...b.ficha }; if (sim) { f.arquivado = true; f.arquivado_em = em; } else { delete f.arquivado; delete f.arquivado_em; } return [b, f]; });
+  const fichas = lista.map((b) => { const f = { ...b.ficha }; if (sim) { f.arquivado = true; f.arquivado_em = em; } else { delete f.arquivado; delete f.arquivado_em; } return [b, f, b.ficha]; });
+  // muda na tela na hora e grava por trás; se o GitHub recusar, volta como estava
+  const aplica = (i) => { fichas.forEach((x) => (x[0].ficha = x[i])); desenharBiblioteca(); $("#navBib").textContent = BIB.filter((x) => statusBib(x).s === "pronto").length + pecasBib().filter((p) => p.s === "pronto").length; if (VIEW === "cronograma") desenharCronograma(); };
+  BIB_SEL = null; aplica(1);
+  const n = lista.length === 1 ? "1 vídeo" : `${lista.length} vídeos`;
+  toast("ok", sim ? `${n} arquivado${lista.length > 1 ? "s" : ""}` : `${n} de volta nos prontos`, sim ? "Estão em Arquivados, nada foi apagado." : "");
   try {
     await commit(`Painel: ${sim ? "arquiva" : "desarquiva"} ${lista.length} vídeo${lista.length > 1 ? "s" : ""} da biblioteca`,
-      fichas.map(([b, f]) => ({ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(f, null, 2) + "\n") })));
-    fichas.forEach(([b, f]) => (b.ficha = f));
-    BIB_SEL = null; desenharBiblioteca();
-    $("#navBib").textContent = BIB.filter((x) => statusBib(x).s === "pronto").length + pecasBib().filter((p) => p.s === "pronto").length;
-    if (VIEW === "cronograma") desenharCronograma();
-    const n = lista.length === 1 ? "1 vídeo" : `${lista.length} vídeos`;
-    toast("ok", sim ? `${n} arquivado${lista.length > 1 ? "s" : ""}` : `${n} de volta nos prontos`, sim ? "Estão em Arquivados, nada foi apagado." : "");
-  } catch (e) { toast("err", "Não salvou", e.message); btn.disabled = false; btn.textContent = texto; }
+      fichas.map(([b, f]) => ({ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(f, null, 2) + "\n" })));
+  } catch (e) { aplica(2); toast("err", "Não salvou, voltou como estava", e.message); }
 });
 $(".bib-filtros").addEventListener("change", (e) => {
   const s = e.target;
@@ -3714,9 +3720,12 @@ async function arquivarVideo(b, sim, slide = null) {
   if (!TOKEN) return toast("err", "Conecte o painel primeiro", "Clique em Conectar.");
   const ficha = { ...b.ficha };
   if (sim) { ficha.arquivado = true; ficha.arquivado_em = new Date().toISOString(); } else { delete ficha.arquivado; delete ficha.arquivado_em; }
+  const antes = b.ficha;
   try {
-    await commit(`Painel: ${sim ? "arquiva" : "desarquiva"} ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(ficha, null, 2) + "\n") }]);
-    b.ficha = ficha; desenharBiblioteca();
+    b.ficha = ficha; // muda na tela na hora; se falhar, volta
+    const gravando = commit(`Painel: ${sim ? "arquiva" : "desarquiva"} ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }]);
+    gravando.catch((e) => { b.ficha = antes; desenharBiblioteca(); toast("err", "Não salvou, voltou como estava", e.message); });
+    desenharBiblioteca();
     $("#navBib").textContent = BIB.filter((x) => statusBib(x).s === "pronto").length + pecasBib().filter((p) => p.s === "pronto").length;
     if (VIEW === "cronograma") desenharCronograma();
     if (slide) { // na tela cheia: fica no mesmo vídeo, só troca o botão e o selo
@@ -3733,7 +3742,7 @@ async function marcarTikTok(b, status) {
   const ficha = { ...b.ficha };
   if (status) ficha.tiktok = { status, em: new Date().toISOString() }; else delete ficha.tiktok;
   try {
-    await commit(`Painel: TikTok de ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(ficha, null, 2) + "\n") }]);
+    await commit(`Painel: TikTok de ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }]);
     b.ficha = ficha; abrirVideo(b.nome); desenharBiblioteca(); if (VIEW === "cronograma") desenharCronograma();
     toast("ok", status === "pedido" ? "Marcado para o TikTok" : status === "postado" ? "Marcado como postado no TikTok" : "TikTok desmarcado", status === "pedido" ? "Peça no chat e eu agendo no Metricool." : "");
   } catch (e) { toast("err", "Não salvou", e.message); }
@@ -3749,7 +3758,7 @@ async function marcarPublicadoMao(b, rede, sim) {
   else delete ficha.publicado[rede];
   if (!Object.keys(ficha.publicado).length) delete ficha.publicado;
   try {
-    await commit(`Painel: ${b.nome} ${sim ? "postado à mão" : "desmarcado"} no ${NOMES_REDE[rede]}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, base64: b64Texto(JSON.stringify(ficha, null, 2) + "\n") }]);
+    await commit(`Painel: ${b.nome} ${sim ? "postado à mão" : "desmarcado"} no ${NOMES_REDE[rede]}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }]);
     b.ficha = ficha; abrirVideo(b.nome); desenharBiblioteca(); if (VIEW === "cronograma") desenharCronograma();
     toast("ok", sim ? `Marcado como publicado no ${NOMES_REDE[rede]}` : "Desmarcado", sim ? "Ele vai para Publicados." : "");
   } catch (e) { toast("err", "Não salvou", e.message); }
@@ -3781,8 +3790,8 @@ async function agendarDaBiblioteca(b) {
   try {
     ligarNoCronograma(b, data);
     await commit(`Painel: agenda ${b.nome} para ${data}`, [
-      { caminho: `agenda/${pasta}/post.json`, base64: b64Texto(JSON.stringify(post, null, 2) + "\n") },
-      { caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") },
+      { caminho: `agenda/${pasta}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" },
+      { caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" },
     ]);
     toast("ok", "Vídeo agendado", `${nomeDia(new Date(quando))}, ${F_HORA.format(new Date(quando))}`); confete();
     fecharGaveta(); await carregarAgenda(); desenharBiblioteca();
@@ -3864,11 +3873,11 @@ async function agendarPeca(it, arqs) {
       const midias = gr.arqs.map((a) => a.name.replace(/\.[^.]+$/, "") + ".jpg");
       for (const [j, a] of gr.arqs.entries()) arquivos.push({ caminho: `agenda/${dest}/${midias[j]}`, base64: await artePraJpg(a.download_url) });
       const post = ordenar({ quando: gr.quando, tipo: story ? "story" : "carrossel", redes, legenda, midias, origem: `producao/${pasta}` });
-      arquivos.push({ caminho: `agenda/${dest}/post.json`, base64: b64Texto(JSON.stringify(post, null, 2) + "\n") });
+      arquivos.push({ caminho: `agenda/${dest}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" });
     }
     it.data = data; it.status = "agendado";
     if (!story) { if (horas[0] !== horaPadrao(data, it.formato, it.id)) it.hora = horas[0]; else delete it.hora; }
-    arquivos.push({ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") });
+    arquivos.push({ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" });
     await commit(`Painel: agenda ${story ? "stories" : "carrossel"} ${curto} para ${data}`, arquivos, [], (f, m) => { btn.innerHTML = `${ic("i-refresh")}${esc(m)}`; });
     toast("ok", story ? "Stories agendados" : "Carrossel agendado", `${nomeDia(new Date(quandos[0]))}, ${F_HORA.format(new Date(quandos[0]))}`); confete();
     fecharGaveta(); await carregarAgenda(); desenharBiblioteca(); if (VIEW === "cronograma") desenharCronograma();
@@ -4098,10 +4107,10 @@ async function salvarCronoEPosts(msg, it, antesItem) {
   if (!TOKEN) { toast("err", "Conecte o painel primeiro", "Clique em Conectar."); return false; }
   const arquivos = ligados.map((y) => {
     const post = { ...y.post, quando: quandoNovo(y.post, it.data, mudouHora || it.hora ? it.hora : "") };
-    return { caminho: `agenda/${y.pasta}/post.json`, base64: b64Texto(JSON.stringify(ordenar(post), null, 2) + "\n") };
+    return { caminho: `agenda/${y.pasta}/post.json`, texto: JSON.stringify(ordenar(post), null, 2) + "\n" };
   });
   try {
-    const sha = await commit(`Painel: cronograma, ${msg} e leva ${ligados.length} post(s) da agenda junto`, [{ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") }, ...arquivos]);
+    const sha = await commit(`Painel: cronograma, ${msg} e leva ${ligados.length} post(s) da agenda junto`, [{ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" }, ...arquivos]);
     toast("ok", "Plano e agenda atualizados", `${ligados.length} post(s) foram junto`); carregarAgenda(sha); return true;
   } catch (e) { toast("err", "Não salvou", e.message); return false; }
 }
@@ -4120,7 +4129,7 @@ function cartaoSolto(x) {
 }
 async function salvarCrono(msg) {
   if (!TOKEN) { toast("err", "Conecte o painel primeiro", "Clique em Conectar."); return false; }
-  try { await commit(`Painel: cronograma, ${msg}`, [{ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") }]); toast("ok", "Cronograma salvo", msg); return true; }
+  try { await commit(`Painel: cronograma, ${msg}`, [{ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" }]); toast("ok", "Cronograma salvo", msg); return true; }
   catch (e) { toast("err", "Não salvou", e.message); return false; }
 }
 $("#cModelo").onclick = async () => {
@@ -4615,7 +4624,7 @@ function editarItem(it, dataInicial) {
     if (!apagarAgenda) { if (!(await salvarCrono(msg))) { CRONO.itens = JSON.parse(antes); CRONO.dispensados = JSON.parse(antesDisp); desenharCronograma(); if (VIEW === "agenda") desenharAgenda(); } return; }
     if (!TOKEN) { CRONO.itens = JSON.parse(antes); CRONO.dispensados = JSON.parse(antesDisp); desenharCronograma(); return toast("err", "Conecte o painel primeiro", "Clique em Conectar."); }
     try {
-      const sha = await commit(`Painel: cronograma, ${msg} e apaga ${ligados.length} post(s) da agenda`, [{ caminho: "cronograma/cronograma.json", base64: b64Texto(JSON.stringify(CRONO, null, 2) + "\n") }],
+      const sha = await commit(`Painel: cronograma, ${msg} e apaga ${ligados.length} post(s) da agenda`, [{ caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" }],
         ligados.flatMap((y) => y.arquivos.filter((a) => a.path).map((a) => a.path)));
       tirarDaTela(ligados.map((y) => y.pasta));
       toast("ok", "Tirado do plano e da agenda", `${ligados.length} post(s) apagado(s)`); carregarAgenda(sha);
