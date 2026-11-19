@@ -20,5 +20,22 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-blackoutz-p1.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-blackoutz-p1.mp4",
+  "publicado": {
+    "instagram": {
+      "id": "18510519955101636",
+      "em": "2026-11-19T02:42:32.054761+00:00",
+      "post": "2026-11-18-reel-clipada-g6-blackoutz-p1"
+    },
+    "facebook": {
+      "id": "122099269665555261",
+      "em": "2026-11-19T02:42:45.704140+00:00",
+      "post": "2026-11-18-reel-clipada-g6-blackoutz-p1"
+    },
+    "youtube": {
+      "id": "sMzYThK_V1s",
+      "em": "2026-11-19T02:42:48.052396+00:00",
+      "post": "2026-11-18-reel-clipada-g6-blackoutz-p1"
+    }
+  }
 }
