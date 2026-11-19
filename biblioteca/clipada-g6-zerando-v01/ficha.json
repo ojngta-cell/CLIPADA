@@ -2,7 +2,7 @@
   "titulo": "Zerando o GTA 6 com o alanzoka · Vídeo 1 · Prólogo: Vice City, dois anos atrás",
   "tipo": "reel",
   "duracao": 73.7,
-  "tamanho": 16388608,
+  "tamanho": 10030441,
   "criado": "2026-11-18T23:09:28+00:00",
   "capa": "capa.jpg",
   "legenda": "ZERANDO O GTA 6 · VÍDEO 1 🎮\nO GTA 6 liberou e o alanzoka já começou: contagem regressiva, Vice City dois anos atrás e a Lucia Caminos 😱\n\nNo Vídeo 2: a Lucia vai pra prisão. Segue pra acompanhar o jogo inteiro!\n\n🎥 Live: @alanzoka (twitch.tv/alanzoka)\n\n#gta6 #gtavi #zerandogta6 #alanzoka #clipadas #cortes",
@@ -22,5 +22,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v01.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v01.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }
