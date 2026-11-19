@@ -17,5 +17,10 @@
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação.",
     "trechos": "vários clipes do mesmo dia juntados (60–90 s)"
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-meikodrj-primeiro-bug-longa.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-meikodrj-primeiro-bug-longa.mp4",
+  "tiktok": {
+    "status": "pedido",
+    "quando": "2026-11-19T08:00:00-03:00",
+    "em": "2026-11-19T10:21:10.677Z"
+  }
 }
