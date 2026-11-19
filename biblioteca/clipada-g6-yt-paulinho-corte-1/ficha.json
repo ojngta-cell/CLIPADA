@@ -1,7 +1,7 @@
 {
   "titulo": "Paulinho o LOKO pegou a primeira Ferrari e bateu no GTA 6",
   "tipo": "reel",
-  "duracao": 83.0,
+  "duracao": 83,
   "tamanho": 27667042,
   "criado": "2026-11-19T08:07:04+00:00",
   "capa": "capa.jpg",
@@ -17,5 +17,10 @@
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-paulinho-corte-1.mp4",
-  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom",
+  "tiktok": {
+    "status": "pedido",
+    "quando": "2026-11-19T17:00:00-03:00",
+    "em": "2026-11-19T19:21:14.254Z"
+  }
 }
