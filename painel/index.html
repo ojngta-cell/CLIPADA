@@ -1561,7 +1561,7 @@ button.ei-passo:active { transform: scale(.98); }
           <div class="rede-op sel" data-rede="facebook"><div class="logo-rede facebook"><svg class="i"><use href="#i-fb"/></svg></div><div><b>Facebook</b><small>Página</small></div></div>
           <div class="rede-op sel" data-rede="youtube"><div class="logo-rede youtube"><svg class="i"><use href="#i-yt"/></svg></div><div><b>YouTube</b><small>Só reel (Short)</small></div></div>
         </div>
-        <p class="dica">TikTok não passa pelo robô.</p>
+        <p class="dica">TikTok: marque “Quero” no vídeo da Biblioteca (sai pelo vidIQ, com sua aprovação no chat).</p>
       </div>
 
       <div class="etapa" data-etapa="4">
@@ -2810,6 +2810,7 @@ function confete() {
 /* ================================================================ análises */
 let SENHA_AN = local.get("painel-robo-senha-analises");
 let AN_BUSCA = "";
+let TT = null; // números do TikTok, gravados pela rotina do Claude (dados públicos, sem senha)
 let AN = null, AN_REDE = "instagram", AN_PER = "d7", AN_ORDEM = "visualizacoes", AN_ORDEM_FB = "visualizacoes", AN_ORDEM_YT = "ordem", anCarregando = false;
 const N = new Intl.NumberFormat("pt-BR");
 const NC = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
@@ -2830,6 +2831,7 @@ async function carregarAnalises() {
     catch (e) { if (e.status === 404) { AN = null; corpo.innerHTML = vazio("i-chart", "Ainda não há números", "A coleta roda uma vez por dia. Para buscar agora, use “Atualizar números”. Antes, crie a senha das análises (veja Conectar)."); return; } throw e; }
     if (!SENHA_AN) { cadeado(); return; }
     try { AN = await decifrar(cif, SENHA_AN); } catch { cadeado(true); return; }
+    try { TT = JSON.parse(await gh(`/contents/dados/tiktok.json?ref=${RAMO}`, { raw: true })); } catch { TT = null; }
     $("#anAtual").textContent = `Atualizado ${relativo(AN.atualizado)} · ${F_COMPLETO.format(new Date(AN.atualizado))}`;
     desenharCardCatalogo(); if (VIEW === "catalogo") desenharCatalogo();
     if ($("#reels")?.hidden) { if (VIEW === "agenda" && carregou) desenharAgenda(); if (VIEW === "biblioteca" && bibCarregou) desenharBiblioteca(); }
@@ -2942,10 +2944,29 @@ function cartaoComentarios(lista, rede) {
     <input class="input com-busca" id="anBusca" type="search" placeholder="Buscar palavra nos comentários" value="${esc(AN_BUSCA)}" autocomplete="off"></div>
     <div class="com-lista" id="anComentarios">${blocos}${vazio}</div></div>`;
 }
+function analiseTikTok() {
+  if (!TT) return `<div class="card">${vazio("i-tt", "Ainda não há números do TikTok", "Aparecem depois do primeiro post pelo vidIQ. A rotina do Claude atualiza uma vez por dia.")}</div>`;
+  const c = TT.conta || {}, hist = (TT.historico || []).filter((h) => h.seguidores != null).map((h) => ({ x: h.dia, y: h.seguidores }));
+  const antes = hist.length > 7 ? hist[hist.length - 8].y : null;
+  const vids = [...(TT.videos || [])].sort((a, b) => (b.quando || "").localeCompare(a.quando || ""));
+  return `<p class="dica" style="margin:0 0 12px">Atualizado ${esc(relativo(TT.atualizado))}. Postagens pelo vidIQ, números públicos do perfil.</p>
+    <div class="kpis stagger">
+      ${kpi("i-users", "Seguidores", num(c.seguidores), delta(c.seguidores, antes) + sparkline(hist.slice(-30)), "gold")}
+      ${kpi("i-heart", "Curtidas no perfil", num(c.curtidas), "", "ok")}
+      ${kpi("i-film", "Vídeos", num(c.videos), "", "info")}
+      ${kpi("i-eye", "Views dos vídeos listados", num(vids.reduce((t, v) => t + (v.views || 0), 0)), "", "info")}
+    </div>
+    ${hist.length > 1 ? `<div class="card" style="margin-top:16px"><h3>${ic("i-chart")}Seguidores no TikTok</h3>${graficoLinha(hist, "seguidores")}</div>` : ""}
+    <div class="card" style="margin-top:16px"><h3>${ic("i-trophy")}Vídeos</h3>
+      <div class="tops stagger">${vids.map((x, i) => `
+        <a class="top" href="${esc(x.link || "#")}" target="_blank" rel="noopener"><div class="img" style="background-image:url('${esc(x.imagem || "")}')"><span class="pos">${i + 1}</span><div class="big"><b>${num(x.views)}</b><small>visualizações</small></div></div>
+        <div class="mets"><div><b>${num(x.curtidas)}</b>curtidas</div><div><b>${num(x.comentarios)}</b>coment.</div><div><b>${num(x.compartilhamentos)}</b>compart.</div></div>
+        <div style="padding:0 10px 10px;font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.quando ? esc(F_CURTO.format(new Date(x.quando))) : ""}${x.legenda ? " · " + esc(x.legenda) : ""}</div></a>`).join("") || `<div class="vazio" style="grid-column:1/-1">Nenhum vídeo ainda.</div>`}</div></div>`;
+}
 function desenharAnalises() {
   if (!AN) return;
   const segm = `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:16px">
-    <div class="segm" id="anRedes"><div class="ind"></div>${["instagram", "facebook", "youtube"].map((r) => `<button data-anr="${r}" class="${AN_REDE === r ? "ativo" : ""}">${ic(ICONE_REDE[r])}${NOMES_REDE[r]}</button>`).join("")}</div>
+    <div class="segm" id="anRedes"><div class="ind"></div>${["instagram", "facebook", "youtube"].map((r) => `<button data-anr="${r}" class="${AN_REDE === r ? "ativo" : ""}">${ic(ICONE_REDE[r])}${NOMES_REDE[r]}</button>`).join("")}<button data-anr="tiktok" class="${AN_REDE === "tiktok" ? "ativo" : ""}">${ic("i-tt")}TikTok</button></div>
     ${AN_REDE === "instagram" ? `<div class="segm" id="anPer"><div class="ind"></div>${[["ontem", "Ontem"], ["d7", "7 dias"], ["d28", "28 dias"]].map(([k, n]) => `<button data-anp="${k}" class="${AN_PER === k ? "ativo" : ""}">${n}</button>`).join("")}</div>` : ""}</div>`;
   let html = "";
   if (AN_REDE === "instagram") {
@@ -2991,6 +3012,8 @@ function desenharAnalises() {
         <div style="padding:0 10px 10px;font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.quando ? esc(F_CURTO.format(new Date(x.quando))) : ""}${x.legenda ? " · " + esc(x.legenda) : ""}</div></a>`).join("") || `<div class="vazio" style="grid-column:1/-1">Nenhum post encontrado.</div>`}</div></div>
     ${cartaoComentarios(fb.posts, "facebook")}
     ${avisos(fb.erros)}`;
+  } else if (AN_REDE === "tiktok") {
+    html += analiseTikTok();
   } else {
     const yt = AN.youtube || {}, c = yt.conta || {};
     const ytLista = ordenarPosts(yt.videos, AN_ORDEM_YT === "ordem" ? "recentes" : AN_ORDEM_YT);
@@ -3025,7 +3048,7 @@ $("#anCorpo").addEventListener("click", (e) => {
 $("#anCorpo").addEventListener("input", (e) => {
   if (e.target.id !== "anBusca") return;
   AN_BUSCA = e.target.value;
-  const lista = AN_REDE === "youtube" ? AN.youtube?.videos : AN[AN_REDE]?.posts;
+  const lista = AN_REDE === "youtube" ? AN.youtube?.videos : AN_REDE === "tiktok" ? TT?.videos : AN[AN_REDE]?.posts;
   const novo = document.createElement("div"); novo.innerHTML = cartaoComentarios(lista, AN_REDE);
   $("#anComentarios").replaceWith($("#anComentarios", novo));
 });
@@ -3092,11 +3115,27 @@ function chipBib(st) {
   if (st.s === "arquivado") return `<span class="chip">${ic("i-archive")}Arquivado</span>`;
   return `<span class="chip gold"><span class="ponto"></span>Pronto</span>`;
 }
+/* TikTok vai pelo vidIQ: o painel marca "pedido" (com horário opcional) e a rotina do Claude prepara,
+   pede a aprovação do Vitor no chat, agenda e grava aqui o andamento (preparado, agendado, postado, erro) */
+const TT_ESTADOS = {
+  pedido: ["warn", "Pedido", "O Claude prepara no vidIQ e pede sua aprovação no chat."],
+  preparado: ["info", "Esperando você", "Rascunho pronto. Aprove no chat do Claude."],
+  agendado: ["info", "Agendado", "O vidIQ publica sozinho no horário."],
+  postado: ["ok", "Postado", ""],
+  erro: ["err", "Deu erro", "O Claude tenta de novo na próxima rodada."],
+};
+function textoTikTok(t) {
+  const s = t?.status; if (!TT_ESTADOS[s]) return ["", "Não vai", "Marque “Quero” e o Claude posta pelo vidIQ."];
+  let [cls, tit, sub] = TT_ESTADOS[s];
+  if (t.quando && (s === "pedido" || s === "preparado" || s === "agendado")) sub = `${F_COMPLETO.format(new Date(t.quando))} · ${sub}`;
+  if (s === "postado") sub = t.manual ? "Postado à mão" : t.em ? F_COMPLETO.format(new Date(t.em)) : "";
+  if (s === "erro" && t.motivo) sub = `${t.motivo} · ${sub}`;
+  return [cls, tit, sub];
+}
 function chipTikTok(f) {
-  const s = f.tiktok?.status;
-  if (s === "postado") return `<span class="chip ok">${ic("i-tt")}TikTok</span>`;
-  if (s === "pedido") return `<span class="chip warn" title="Peça no chat para eu agendar no Metricool">${ic("i-tt")}TikTok pedido</span>`;
-  return "";
+  const t = f.tiktok, s = t?.status; if (!TT_ESTADOS[s]) return "";
+  const [cls, tit] = TT_ESTADOS[s];
+  return `<span class="chip ${cls}" title="TikTok: ${esc(tit)}">${ic("i-tt")}${s === "postado" ? "TikTok" : "TikTok " + esc(tit.toLowerCase())}</span>`;
 }
 function duracao(s) { s = Math.round(+s || 0); return s ? (s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : `${s}s`) : ""; }
 function bibCategoriaDe(b) { return b.ficha.tipo || "reel"; }
@@ -3700,7 +3739,8 @@ function abrirVideo(nome, agendar = false, pre = null) {
         <input class="input" type="date" id="agData" style="margin-top:8px">
         <label class="campo">Hora (Brasília)</label>${seletorHora("agHora")}
         <label class="campo">Redes</label>
-        <div class="redes" id="agRedes">${Object.keys(NOMES_REDE).map((r) => `<button class="chip ok" data-r="${r}" style="cursor:pointer;padding:8px 12px">${ic(ICONE_REDE[r])}${NOMES_REDE[r]}</button>`).join("")}</div>
+        <div class="redes" id="agRedes">${Object.keys(NOMES_REDE).map((r) => `<button class="chip ok" data-r="${r}" style="cursor:pointer;padding:8px 12px">${ic(ICONE_REDE[r])}${NOMES_REDE[r]}</button>`).join("")}<button class="chip ${f.tiktok?.status === "pedido" ? "ok" : ""}" data-r="tiktok" style="cursor:pointer;padding:8px 12px" ${["agendado", "postado"].includes(f.tiktok?.status) ? "disabled" : ""}>${ic("i-tt")}TikTok</button></div>
+        <p class="dica">TikTok sai pelo vidIQ no mesmo horário, depois que você aprovar no chat do Claude.</p>
         <div class="aviso-post" id="agErros" style="margin-top:12px"></div>
       </div></div>
       <div class="sec-tit" style="margin-top:22px">Textos</div>
@@ -3728,13 +3768,16 @@ function abrirVideo(nome, agendar = false, pre = null) {
       const mao = !pr || pr.manual ? `<div class="tt-segm" role="group" aria-label="${NOMES_REDE[r]}">${[["", "Ainda não"], ["1", "Já postei à mão"]].map(([k, n]) => `<button class="${on === k ? "on" : ""}" data-pm="${r}" data-v="${k}" aria-pressed="${on === k}">${n}</button>`).join("")}</div>` : "";
       return linhaRede(r, cls, tit, sub, "", mao);
     }).join("");
-    const tts = f.tiktok?.status || "";
+    const tts = f.tiktok?.status || "", ttTxt = textoTikTok(f.tiktok);
+    const ttLink = f.tiktok?.link ? `<a class="sub" href="${esc(f.tiktok.link)}" target="_blank" rel="noopener">Abrir no TikTok</a>` : "";
+    const ttNum = f.tiktok?.numeros ? linhaNumeros(f.tiktok.numeros) : "";
+    const ttOn = ["pedido", "preparado", "agendado", "erro"].includes(tts) ? "pedido" : tts;
     $("#gavCorpo").innerHTML = `
       <div class="det-topo">${player}<div class="det-lado">
         <div class="sec-tit">Onde vai sair</div>
         <div class="redes-lista">${linhas}
-          ${linhaRede("tiktok", tts === "postado" ? "ok" : tts === "pedido" ? "warn" : "", tts === "postado" ? "Postado" : tts === "pedido" ? "Pedido" : "Não vai", tts === "pedido" ? "Peça no chat e eu agendo no Metricool." : "Vai pelo Metricool, não pelo robô.", "",
-            `<div class="tt-segm" id="ttOp" role="group" aria-label="TikTok">${[["", "Não vai"], ["pedido", "Quero"], ["postado", "Já está lá"]].map(([k, n]) => `<button class="${tts === k ? "on" : ""}" data-tt="${k}" aria-pressed="${tts === k}">${n}</button>`).join("")}</div>`)}
+          ${linhaRede("tiktok", ttTxt[0], ttTxt[1], ttTxt[2], ttLink + ttNum,
+            tts === "agendado" || (tts === "postado" && !f.tiktok?.manual) ? "" : `<div class="tt-segm" id="ttOp" role="group" aria-label="TikTok">${[["", "Não vai"], ["pedido", "Quero"], ["postado", "Já está lá"]].map(([k, n]) => `<button class="${ttOn === k ? "on" : ""}" data-tt="${k}" aria-pressed="${ttOn === k}">${n}</button>`).join("")}</div>`)}
         </div>
       </div></div>
       ${(() => { const n = numerosBib(b); return n ? `<div class="sec-tit" style="margin-top:22px">Números</div>${linhaNumeros(n)}` : ""; })()}
@@ -3742,7 +3785,7 @@ function abrirVideo(nome, agendar = false, pre = null) {
       ${blocoTextos(f)}
       ${st.s === "agendado" ? `<div style="margin-top:16px"><button class="btn peq" data-abrir="${esc(st.pasta)}">Ver na agenda${ic("i-right")}</button></div>` : ""}`;
     $("#gavCorpo").onclick = (e) => { if (e.target.closest("[data-imagina]")) { fecharGaveta(); pedirImaginaSe(nome); } };
-    $("#ttOp").onclick = (e) => { const c = e.target.closest("[data-tt]"); if (c) marcarTikTok(b, c.dataset.tt); };
+    if ($("#ttOp")) $("#ttOp").onclick = (e) => { const c = e.target.closest("[data-tt]"); if (c) marcarTikTok(b, c.dataset.tt); };
     $$("#gavCorpo [data-pm]").forEach((c) => { c.onclick = () => marcarPublicadoMao(b, c.dataset.pm, !!c.dataset.v); });
     const arq = !!f.arquivado;
     $("#gavPe").innerHTML = `<a class="btn fant" href="${esc(b.videoUrl)}" download>${ic("i-down")}Baixar</a>${st.s === "agendado" ? "" : `<button class="btn fant" id="bArquivo">${ic("i-archive")}${arq ? "Desarquivar" : "Arquivar"}</button>`}<button class="btn pri" id="bAgenda">${ic("i-cal")}${st.s === "pronto" ? "Agendar" : "Agendar de novo"}</button>`;
@@ -3777,11 +3820,12 @@ async function arquivarVideo(b, sim, slide = null) {
 async function marcarTikTok(b, status) {
   if (!TOKEN) return toast("err", "Conecte o painel primeiro", "Clique em Conectar.");
   const ficha = { ...b.ficha };
-  if (status) ficha.tiktok = { status, em: new Date().toISOString() }; else delete ficha.tiktok;
+  if (status === "pedido" && ["pedido", "preparado", "erro"].includes(ficha.tiktok?.status)) return; // já está na fila
+  if (status) ficha.tiktok = { status, em: new Date().toISOString(), ...(status === "postado" ? { manual: true } : {}) }; else delete ficha.tiktok;
   try {
     await commit(`Painel: TikTok de ${b.nome}`, [{ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }]);
     b.ficha = ficha; abrirVideo(b.nome); desenharBiblioteca(); if (VIEW === "cronograma") desenharCronograma();
-    toast("ok", status === "pedido" ? "Marcado para o TikTok" : status === "postado" ? "Marcado como postado no TikTok" : "TikTok desmarcado", status === "pedido" ? "Peça no chat e eu agendo no Metricool." : "");
+    toast("ok", status === "pedido" ? "Marcado para o TikTok" : status === "postado" ? "Marcado como postado no TikTok" : "TikTok desmarcado", status === "pedido" ? "O Claude prepara e pede sua aprovação no chat." : "");
   } catch (e) { toast("err", "Não salvou", e.message); }
 }
 
@@ -3803,12 +3847,13 @@ async function marcarPublicadoMao(b, rede, sim) {
 
 async function agendarDaBiblioteca(b) {
   const f = b.ficha, data = $("#agData").value, hora = $("#agHora").value;
-  const redes = $$("#agRedes .chip.ok").map((c) => c.dataset.r);
+  const todas = $$("#agRedes .chip.ok").map((c) => c.dataset.r), tiktok = todas.includes("tiktok");
+  const redes = todas.filter((r) => r !== "tiktok");
   const erros = [];
   if (!TOKEN) erros.push("conecte o painel ao GitHub primeiro");
   if (!data) erros.push("escolha o dia");
   if (!hora) erros.push("escolha a hora");
-  if (!redes.length) erros.push("marque pelo menos uma rede");
+  if (!redes.length) erros.push("marque pelo menos uma rede além do TikTok");
   const quando = data && hora ? `${data}T${hora}:00-03:00` : "";
   if (quando && new Date(quando) < new Date()) erros.push("esse horário já passou");
   if (!b.videoUrl) erros.push("o vídeo ainda não chegou na biblioteca");
@@ -3821,15 +3866,24 @@ async function agendarDaBiblioteca(b) {
   let pasta = `${data}-${post.tipo}-${b.nome}`.slice(0, 80);
   for (let i = 2; POSTS.some((x) => x.pasta === pasta); i++) pasta = `${data}-${post.tipo}-${b.nome}-${i}`.slice(0, 80);
   const ok = await confirmar({ titulo: "Agendar este vídeo?", icone: "i-cal", rotulo: "Agendar",
-    texto: `<p><b>${esc(f.titulo || b.nome)}</b></p><p>${esc(nomeDia(new Date(quando)))}, <b>${esc(F_HORA.format(new Date(quando)))}</b> no ${esc(redes.map((r) => NOMES_REDE[r]).join(", "))}.</p><p>O robô publica sozinho nesse horário. O cronograma também é atualizado.</p>` });
+    texto: `<p><b>${esc(f.titulo || b.nome)}</b></p><p>${esc(nomeDia(new Date(quando)))}, <b>${esc(F_HORA.format(new Date(quando)))}</b> no ${esc(redes.map((r) => NOMES_REDE[r]).concat(tiktok ? ["TikTok"] : []).join(", "))}.</p><p>O robô publica sozinho nesse horário. O cronograma também é atualizado.${tiktok ? " O TikTok sai pelo vidIQ depois que você aprovar no chat do Claude." : ""}</p>` });
   if (!ok) return;
   const btn = $("#agOk"); btn.disabled = true; btn.classList.add("gira"); btn.innerHTML = `${ic("i-refresh")}Agendando…`;
   try {
     ligarNoCronograma(b, data);
-    await commit(`Painel: agenda ${b.nome} para ${data}`, [
+    const arquivos = [
       { caminho: `agenda/${pasta}/post.json`, texto: JSON.stringify(post, null, 2) + "\n" },
       { caminho: "cronograma/cronograma.json", texto: JSON.stringify(CRONO, null, 2) + "\n" },
-    ]);
+    ];
+    const ttAtual = f.tiktok?.status;
+    if (tiktok && !["agendado", "postado"].includes(ttAtual)) {
+      const ficha = { ...f, tiktok: { status: "pedido", quando, em: new Date().toISOString() } };
+      arquivos.push({ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }); b.ficha = ficha;
+    } else if (!tiktok && ttAtual === "pedido") {
+      const ficha = { ...f }; delete ficha.tiktok;
+      arquivos.push({ caminho: `biblioteca/${b.nome}/ficha.json`, texto: JSON.stringify(ficha, null, 2) + "\n" }); b.ficha = ficha;
+    }
+    await commit(`Painel: agenda ${b.nome} para ${data}${tiktok ? " (com TikTok)" : ""}`, arquivos);
     toast("ok", "Vídeo agendado", `${nomeDia(new Date(quando))}, ${F_HORA.format(new Date(quando))}`); confete();
     fecharGaveta(); await carregarAgenda(); desenharBiblioteca();
   } catch (e) {
