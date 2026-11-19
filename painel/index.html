@@ -285,6 +285,14 @@ label.campo { display: block; margin: 16px 0 6px; font-size: 13px; font-weight: 
 .segm .ind { position: absolute; top: 4px; bottom: 4px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border-strong); transition: transform .4s var(--spring), width .4s var(--spring); }
 .bib-filtros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px; }
 .bib-filtros label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; min-width: 0; }
+.bib-busca { position: relative; margin: 0 0 12px; }
+.bib-busca .i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.bib-busca input { width: 100%; height: 44px; font: inherit; font-size: 15px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0 40px 0 40px; -webkit-appearance: none; appearance: none; }
+.bib-busca input::-webkit-search-cancel-button { display: none; }
+.bib-busca input:focus { outline: none; border-color: var(--border-strong); }
+.bib-busca button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
+.bib-busca button[hidden] { display: none; }
+.bib-busca button .i { position: static; transform: none; width: 16px; height: 16px; }
 .bib-filtros select { width: 100%; min-width: 0; height: 44px; font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0 10px; }
 .arte-vista { position: fixed; inset: 0; z-index: 75; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: rgba(5,9,9,.97); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 .arte-vista[hidden] { display: none; }
@@ -1423,6 +1431,11 @@ button.ei-passo:active { transform: scale(.98); }
         <button data-bf="todos">Todos <span data-bc="todos"></span></button>
         <button data-bf="arquivados">Arquivados <span data-bc="arquivados"></span></button>
       </div>
+      <div class="bib-busca" role="search">
+        <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" id="bibBusca" placeholder="Buscar: streamer, título, jogo, legenda…" aria-label="Buscar na biblioteca" autocomplete="off" enterkeyhint="search">
+        <button type="button" id="bibBuscaX" aria-label="Limpar busca" hidden><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
       <div class="bib-filtros">
         <label>Categoria <select id="bibCat">
           <option value="todas">Todas</option><option value="reel">Reels</option><option value="carrossel">Carrosséis</option><option value="story">Stories</option>
@@ -1700,6 +1713,7 @@ button.ei-passo:active { transform: scale(.98); }
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
@@ -3067,7 +3081,7 @@ $("#btnColetar").onclick = () => rodar("analises");
 
 
 /* ================================================================ biblioteca */
-let BIB = [], bibCarregou = false, bibErro = "", BIB_FILTRO = "prontos", BIB_CAT = "todas", BIB_DIA = "todos", BIB_ORDEM = "recentes";
+let BIB = [], bibCarregou = false, bibErro = "", BIB_FILTRO = "prontos", BIB_CAT = "todas", BIB_DIA = "todos", BIB_ORDEM = "recentes", BIB_BUSCA = "";
 async function carregarBiblioteca() {
   try {
     let itens = [];
@@ -3146,14 +3160,33 @@ function tempoDe(q) {
   return isNaN(t) ? 0 : t;
 }
 function diaDaSemana(q) { const t = tempoDe(q); return t ? new Date(t).getDay() : null; }
+/* busca: sem diferença de maiúsculas, minúsculas e acentos; com várias palavras, o item precisa ter todas */
+function normBusca(t) { return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+const BUSCA_FORA = new Set(["video_url", "capa", "criado", "arquivado_em", "autorizacao", "tamanho", "duracao"]);
+function textosDe(v, saida = [], chave = "") {
+  if (BUSCA_FORA.has(chave) || v == null) return saida;
+  if (typeof v === "string") saida.push(v);
+  else if (Array.isArray(v)) v.forEach((x) => textosDe(x, saida));
+  else if (typeof v === "object") Object.entries(v).forEach(([k, x]) => textosDe(x, saida, k));
+  return saida;
+}
+function bateBusca(textos) {
+  const termos = normBusca(BIB_BUSCA).split(/\s+/).filter(Boolean);
+  if (!termos.length) return true;
+  const alvo = normBusca(textos.join(" \n "));
+  return termos.every((t) => alvo.includes(t));
+}
+/* título, legenda, streamer, plataforma, jogo, título do clipe, tags e o nome da pasta */
+function bateBuscaBib(b) { return bateBusca([b.nome, NOMES_TIPO[b.ficha.tipo] || "Reel", ...textosDe(b.ficha)]); }
+function bateBuscaPeca(p) { return bateBusca([p.it.tema, p.it.notas, FORMATOS[p.it.formato] || p.it.formato, p.it.legenda, p.it.titulo]); }
 function desenharBiblioteca() {
   const alvo = $("#bibLista"); pedirNumeros();
   if (!bibCarregou) { alvo.innerHTML = `<div class="vids">${'<div class="skel" style="aspect-ratio:9/16"></div>'.repeat(4)}</div>`; return; }
   if (bibErro) { alvo.innerHTML = vazio("i-alert", "Não consegui ler a biblioteca", esc(bibErro)); return; }
   const grupo = { pronto: "prontos", agendado: "agendados", publicado: "publicados", arquivado: "arquivados" };
   const cont = { prontos: 0, agendados: 0, publicados: 0, arquivados: 0, todos: 0 };
-  BIB.forEach((b) => { const g = grupo[statusBib(b).s]; cont[g]++; if (g !== "arquivados") cont.todos++; }); // "Todos" não mostra os arquivados
-  const pecas = pecasBib();
+  BIB.forEach((b) => { if (!bateBuscaBib(b)) return; const g = grupo[statusBib(b).s]; cont[g]++; if (g !== "arquivados") cont.todos++; }); // "Todos" não mostra os arquivados
+  const pecas = pecasBib().filter(bateBuscaPeca);
   /* conta cada arte (um story ou slide é um cartão), para o número bater com o que aparece */
   const nArtes = (p) => Math.max(1, (PRODUCAO?.[(p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1]] || []).length);
   pecas.forEach((p) => { if (p.g) cont[p.g] += nArtes(p); cont.todos += nArtes(p); });
@@ -3165,7 +3198,7 @@ function desenharBiblioteca() {
     const g = grupo[statusBib(b).s];
     if (BIB_FILTRO === "todos" ? g === "arquivados" : g !== BIB_FILTRO) return;
     const q = quandoBib(b);
-    if (!passa(bibCategoriaDe(b), q)) return;
+    if (!passa(bibCategoriaDe(b), q) || !bateBuscaBib(b)) return;
     const f = b.ficha, st = statusBib(b), nb = st.s === "publicado" ? numerosBib(b) : null;
     itens.push({ q, feed: b.videoUrl ? { k: "v", chave: "v:" + b.nome, nome: b.nome } : null, html: `<div class="card vid st-${st.s}${BIB_SEL?.has(b.nome) ? " sel" : ""}" data-bib="${esc(b.nome)}" ${b.videoUrl ? `data-feed="${esc("v:" + b.nome)}"` : ""}>
       <div class="capa" style="background-image:url('${esc(b.capaUrl)}')">
@@ -3199,7 +3232,10 @@ function desenharBiblioteca() {
   });
   if (!itens.length) {
     const filtrado = BIB_CAT !== "todas" || BIB_DIA !== "todos";
-    alvo.innerHTML = !BIB.length && !pecas.length ? vazio("i-film", "A biblioteca está vazia", "Quando eu terminar um vídeo, ele aparece aqui com capa, legenda e títulos, pronto para agendar.")
+    const outras = BIB_BUSCA.trim() ? Object.entries(cont).filter(([k, n]) => n && k !== BIB_FILTRO && k !== "todos") : [];
+    const nomesAba = { prontos: "Prontos", agendados: "Agendados", publicados: "Publicados", arquivados: "Arquivados" };
+    alvo.innerHTML = BIB_BUSCA.trim() && (BIB.length || pecas.length) ? vazio("i-search", `Nada com “${esc(BIB_BUSCA.trim())}” aqui`, outras.length ? `Achei em: ${outras.map(([k, n]) => `${nomesAba[k]} (${n})`).join(", ")}. Toque na aba para ver.` : filtrado ? "Tente outra categoria, outro dia ou outra palavra." : "Tente outra palavra.")
+      : !BIB.length && !pecas.length ? vazio("i-film", "A biblioteca está vazia", "Quando eu terminar um vídeo, ele aparece aqui com capa, legenda e títulos, pronto para agendar.")
       : filtrado ? vazio("i-film", "Nada com esses filtros", "Tente outra categoria ou outro dia da semana.")
       : vazio("i-film", "Nada nesse filtro", BIB_FILTRO === "prontos" ? "Todos os vídeos já foram agendados ou publicados." : BIB_FILTRO === "arquivados" ? "Nenhum vídeo arquivado. Para tirar um vídeo dos prontos, abra ele e toque em Arquivar." : "Nenhum vídeo aqui ainda.");
     return;
@@ -3357,6 +3393,13 @@ $(".bib-filtros").addEventListener("change", (e) => {
   else return;
   desenharBiblioteca();
 });
+$("#bibBusca").addEventListener("input", (e) => {
+  BIB_BUSCA = e.target.value; $("#bibBuscaX").hidden = !BIB_BUSCA;
+  if (BIB_SEL) BIB_SEL.clear();
+  desenharBiblioteca();
+});
+$("#bibBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); else if (e.key === "Escape" && e.target.value) { e.preventDefault(); $("#bibBuscaX").click(); } });
+$("#bibBuscaX").addEventListener("click", () => { const c = $("#bibBusca"); c.value = ""; BIB_BUSCA = ""; $("#bibBuscaX").hidden = true; desenharBiblioteca(); c.focus(); });
 $("#bibFiltros").addEventListener("click", (e) => {
   const b = e.target.closest("[data-bf]"); if (!b) return;
   BIB_FILTRO = b.dataset.bf; $$("#bibFiltros [data-bf]").forEach((x) => x.classList.toggle("ativo", x === b));
