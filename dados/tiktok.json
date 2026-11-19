@@ -1,0 +1,39 @@
+{
+  "atualizado": "2026-11-19T10:22:47-03:00",
+  "conta": {
+    "handle": "ojn.br01",
+    "seguidores": 1,
+    "curtidas": 39,
+    "videos": 5
+  },
+  "historico": [
+    {
+      "dia": "2026-11-19",
+      "seguidores": 1
+    }
+  ],
+  "videos": [
+    {
+      "link": "https://www.tiktok.com/@ojn.br01/video/7709848187112033544",
+      "legenda": "O MeikodRJ achou o primeiro bug do GTA 6 🐞",
+      "quando": "2026-11-19T11:48:31+00:00",
+      "imagem": "",
+      "views": 0,
+      "curtidas": 0,
+      "comentarios": 0,
+      "compartilhamentos": 0,
+      "biblioteca": "clipada-g6-meikodrj-primeiro-bug-longa"
+    },
+    {
+      "link": "https://www.tiktok.com/@ojn.br01/video/7709866853836852501",
+      "legenda": "Zerando o GTA 6 com Paulinho o LOKO · Vídeo 1",
+      "quando": "2026-11-19T13:00:56+00:00",
+      "imagem": "",
+      "views": 0,
+      "curtidas": 0,
+      "comentarios": 0,
+      "compartilhamentos": 0,
+      "biblioteca": "clipada-g6-yt-paulinho-zerando-v01"
+    }
+  ]
+}
