@@ -2,7 +2,7 @@
   "titulo": "O cara aguentou uma martelada: BRKsEDU no GTA 6",
   "tipo": "reel",
   "duracao": 71.0,
-  "tamanho": 29928278,
+  "tamanho": 24610821,
   "criado": "2026-11-19T08:07:04+00:00",
   "capa": "capa.jpg",
   "legenda": "O cara aguentou uma martelada 🔨😂\n\n🎥 Vídeo: BRKsEDU no YouTube\n\n#gta6 #gtavi #clipadas #cortes #brksedu",
@@ -16,5 +16,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-brks-corte-1.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-brks-corte-1.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }
