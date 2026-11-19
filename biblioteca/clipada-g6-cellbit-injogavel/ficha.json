@@ -1,7 +1,7 @@
 {
   "titulo": "Cellbit já chamou o GTA 6 de injogável",
   "tipo": "reel",
-  "duracao": 34.0,
+  "duracao": 34,
   "tamanho": 16505463,
   "criado": "2026-11-18T16:32:21+00:00",
   "capa": "capa.jpg",
@@ -16,5 +16,7 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-cellbit-injogavel.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-cellbit-injogavel.mp4",
+  "arquivado": true,
+  "arquivado_em": "2026-11-19T00:57:09.378Z"
 }
