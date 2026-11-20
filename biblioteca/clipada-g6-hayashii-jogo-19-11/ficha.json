@@ -17,5 +17,10 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-hayashii-jogo-19-11.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-hayashii-jogo-19-11.mp4",
+  "tiktok": {
+    "status": "pedido",
+    "quando": "2026-11-20T10:26:00-03:00",
+    "em": "2026-11-20T13:25:30.815Z"
+  }
 }
