@@ -23,5 +23,10 @@
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v01.mp4",
-  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom",
+  "tiktok": {
+    "status": "pedido",
+    "quando": "2026-11-20T19:09:00-03:00",
+    "em": "2026-11-20T22:07:27.493Z"
+  }
 }
