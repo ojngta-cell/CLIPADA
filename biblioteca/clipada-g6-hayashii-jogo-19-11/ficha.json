@@ -22,5 +22,22 @@
     "status": "pedido",
     "quando": "2026-11-20T10:26:00-03:00",
     "em": "2026-11-20T13:25:30.815Z"
+  },
+  "publicado": {
+    "instagram": {
+      "id": "18107235443201647",
+      "em": "2026-11-20T13:28:43.333381+00:00",
+      "post": "2026-11-20-reel-clipada-g6-hayashii-jogo-19-11"
+    },
+    "facebook": {
+      "id": "122100474381555261",
+      "em": "2026-11-20T13:28:53.982817+00:00",
+      "post": "2026-11-20-reel-clipada-g6-hayashii-jogo-19-11"
+    },
+    "youtube": {
+      "id": "r1OEs5QETEk",
+      "em": "2026-11-20T13:28:56.733512+00:00",
+      "post": "2026-11-20-reel-clipada-g6-hayashii-jogo-19-11"
+    }
   }
 }
