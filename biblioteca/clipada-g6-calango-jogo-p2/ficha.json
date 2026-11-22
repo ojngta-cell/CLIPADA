@@ -26,5 +26,22 @@
     "status": "pedido",
     "quando": "2026-11-22T13:25:00-03:00",
     "em": "2026-11-22T16:22:35.966Z"
+  },
+  "publicado": {
+    "instagram": {
+      "id": "18079512977466497",
+      "em": "2026-11-22T16:27:27.350404+00:00",
+      "post": "2026-11-22-reel-clipada-g6-calango-jogo-p2"
+    },
+    "facebook": {
+      "id": "122102370711555261",
+      "em": "2026-11-22T16:27:37.751205+00:00",
+      "post": "2026-11-22-reel-clipada-g6-calango-jogo-p2"
+    },
+    "youtube": {
+      "id": "UV0MYuFCdQE",
+      "em": "2026-11-22T16:27:39.699610+00:00",
+      "post": "2026-11-22-reel-clipada-g6-calango-jogo-p2"
+    }
   }
 }
