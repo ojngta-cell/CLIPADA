@@ -17,8 +17,10 @@
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/carro-raro-g6-emerus.mp4",
   "tiktok": {
-    "status": "pedido",
+    "status": "preparado",
     "quando": "2026-11-24T18:00:00-03:00",
-    "em": "2026-11-24T14:13:03.850Z"
+    "em": "2026-11-24T14:20:06Z",
+    "post_id": "9130ddb1-665e-4d27-a2f9-639674c1b0f4",
+    "revisao": "fe8d76d8"
   }
 }
