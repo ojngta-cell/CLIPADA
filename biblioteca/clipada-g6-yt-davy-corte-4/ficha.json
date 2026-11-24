@@ -2,7 +2,7 @@
   "titulo": "A iluminação desse jogo tá insana",
   "tipo": "reel",
   "duracao": 83.0,
-  "tamanho": 27196314,
+  "tamanho": 23624817,
   "criado": "2026-11-19T13:02:40+00:00",
   "capa": "capa.jpg",
   "legenda": "Davy Jones dando um rolê de carro e babando na iluminação do GTA 6 ✨\n\n🎥 Vídeo: Davy Jones no YouTube\n\n#gta6 #gtavi #clipadas #cortes #davyjones",
@@ -16,5 +16,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-davy-corte-4.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-davy-corte-4.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }
