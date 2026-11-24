@@ -2,7 +2,7 @@
   "titulo": "Fuga de hidroavião: BRKsEDU no GTA 6",
   "tipo": "reel",
   "duracao": 93.0,
-  "tamanho": 54607474,
+  "tamanho": 48193326,
   "criado": "2026-11-19T10:00:43+00:00",
   "capa": "capa.jpg",
   "legenda": "Fuga de hidroavião 🛩️💥\n\n🎥 Vídeo: BRKsEDU no YouTube\n\n#gta6 #gtavi #clipadas #cortes #brksedu",
@@ -16,5 +16,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-brks-corte-2.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-brks-corte-2.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }

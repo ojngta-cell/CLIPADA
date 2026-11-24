@@ -2,7 +2,7 @@
   "titulo": "Tiroteio até o avião: Coringa no GTA 6",
   "tipo": "reel",
   "duracao": 91.0,
-  "tamanho": 43355129,
+  "tamanho": 39061682,
   "criado": "2026-11-19T10:00:43+00:00",
   "capa": "capa.jpg",
   "legenda": "Tiroteio até o avião 🔫✈️\n\n🎥 Vídeo: Coringa no YouTube\n\n#gta6 #gtavi #clipadas #cortes #coringa",
@@ -16,5 +16,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-coringa-corte-2.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-coringa-corte-2.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }
