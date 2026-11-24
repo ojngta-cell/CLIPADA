@@ -143,6 +143,17 @@
       "status": "pronto",
       "tema": "5 mistérios escondidos no GTA 6 (e onde achar no mapa)",
       "notas": "producao/carrossel-5-misterios-leonida"
+    },
+    {
+      "id": "fhs5kex",
+      "formato": "carrossel",
+      "redes": [
+        "instagram",
+        "facebook"
+      ],
+      "status": "pronto",
+      "tema": "5 carros raros escondidos no GTA 6 (e onde achar no mapa)",
+      "notas": "producao/carrossel-5-carros-raros"
     }
   ]
 }
