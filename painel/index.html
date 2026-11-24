@@ -3192,7 +3192,7 @@ function desenharBiblioteca() {
   BIB.forEach((b) => { if (!bateBuscaBib(b)) return; const g = grupo[statusBib(b).s]; cont[g]++; if (g !== "arquivados") cont.todos++; }); // "Todos" não mostra os arquivados
   const pecas = pecasBib().filter(bateBuscaPeca);
   /* conta cada arte (um story ou slide é um cartão), para o número bater com o que aparece */
-  const nArtes = (p) => Math.max(1, (PRODUCAO?.[(p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1]] || []).length);
+  const nArtes = (p) => p.it.formato !== "stories" ? 1 : Math.max(1, (PRODUCAO?.[(p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1]] || []).length);
   pecas.forEach((p) => { if (p.g) cont[p.g] += nArtes(p); cont.todos += nArtes(p); });
   $$("[data-bc]").forEach((el) => (el.textContent = cont[el.dataset.bc]));
   const passa = (cat, q) => (BIB_CAT === "todas" || cat === BIB_CAT) && (BIB_DIA === "todos" || diaDaSemana(q) === +BIB_DIA);
@@ -3223,8 +3223,9 @@ function desenharBiblioteca() {
     const pasta = (p.it.notas || "").match(/^producao\/([^\/\s]+)/)?.[1];
     const arqs = (PRODUCAO?.[pasta] || []);
     const story = p.it.formato === "stories";
-    (arqs.length ? arqs : [null]).forEach((arq, i, todas) => { const chave = story ? `s:${pasta}:${i}` : `c:${pasta}`; itens.push({ q: p.it.data, feed: arq ? { k: story ? "s" : "c", chave, pasta, idx: i, p, arqs } : null, html: `<div class="card vid st-${p.s}" data-peca="${esc(pasta || "")}" data-idx="${i}" ${arq ? `data-feed="${esc(chave)}"` : ""}>
-      <div class="capa" style="background-image:url('${esc(arq ? arq.download_url : capaItem(p.it))}')"><span class="tag">${esc(FORMATOS[p.it.formato] || p.it.formato)}${todas.length > 1 ? ` ${i + 1}/${todas.length}` : ""}</span></div>
+    /* story: um cartão por arte; carrossel: um cartão só (capa = 1º slide), como um post do Instagram */
+    (arqs.length ? (story ? arqs : arqs.slice(0, 1)) : [null]).forEach((arq, i, todas) => { const chave = story ? `s:${pasta}:${i}` : `c:${pasta}`; itens.push({ q: p.it.data, feed: arq ? { k: story ? "s" : "c", chave, pasta, idx: i, p, arqs } : null, html: `<div class="card vid st-${p.s}" data-peca="${esc(pasta || "")}" data-idx="${i}" ${arq ? `data-feed="${esc(chave)}"` : ""}>
+      <div class="capa" style="background-image:url('${esc(arq ? arq.download_url : capaItem(p.it))}')"><span class="tag">${esc(FORMATOS[p.it.formato] || p.it.formato)}${story ? (todas.length > 1 ? ` ${i + 1}/${todas.length}` : "") : (arqs.length > 1 ? ` · ${arqs.length} slides` : "")}</span></div>
       <div class="info"><b>${esc(p.it.tema || "Sem tema ainda")}</b><div class="chips">${chipPeca(p)}</div></div>
     </div>` }); });
   });
