@@ -19,9 +19,11 @@
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-hayashii-jogo-19-11.mp4",
   "tiktok": {
-    "status": "pedido",
-    "quando": "2026-11-20T10:26:00-03:00",
-    "em": "2026-11-20T13:25:30.815Z"
+    "status": "preparado",
+    "quando": "2026-11-24T21:00:00-03:00",
+    "em": "2026-11-24T13:25:03Z",
+    "post_id": "951f277e-bcc6-41ea-889c-327bf95a2908",
+    "revisao": "c4b1ddc0"
   },
   "publicado": {
     "instagram": {

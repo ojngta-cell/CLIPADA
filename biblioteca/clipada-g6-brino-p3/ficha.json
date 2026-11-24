@@ -22,9 +22,11 @@
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-brino-p3.mp4",
   "tiktok": {
-    "status": "pedido",
-    "quando": "2026-11-21T17:30:00-03:00",
-    "em": "2026-11-21T20:28:04.410Z"
+    "status": "preparado",
+    "quando": "2026-11-25T17:00:00-03:00",
+    "em": "2026-11-24T13:25:03Z",
+    "post_id": "dead80d1-af46-4967-8e1c-6cf906ccc66d",
+    "revisao": "7e50048c"
   },
   "publicado": {
     "instagram": {
