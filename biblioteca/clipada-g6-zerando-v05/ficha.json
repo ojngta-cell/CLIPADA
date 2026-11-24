@@ -2,7 +2,7 @@
   "titulo": "Zerando o GTA 6 com o alanzoka · Vídeo 5 · A nova vida do Jason",
   "tipo": "reel",
   "duracao": 118.6,
-  "tamanho": 34921680,
+  "tamanho": 15929493,
   "criado": "2026-11-19T00:37:00+00:00",
   "capa": "capa.jpg",
   "legenda": "ZERANDO O GTA 6 · VÍDEO 5 🎮\nO chefe cobra, a Lucia liga da prisão e o alanzoka descobre o kit de restauro 🚗📞\n\nNo Vídeo 6: o mapa do GTA 6 pela primeira vez. Segue pra acompanhar o jogo inteiro!\n\n🎥 Live: @alanzoka (twitch.tv/alanzoka)\n\n#gta6 #gtavi #zerandogta6 #alanzoka #clipadas #cortes",
@@ -22,5 +22,6 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v05.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v05.mp4",
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
 }
