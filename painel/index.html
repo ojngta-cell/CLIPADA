@@ -3204,7 +3204,7 @@ function desenharBiblioteca() {
     const q = quandoBib(b);
     if (!passa(bibCategoriaDe(b), q) || !bateBuscaBib(b)) return;
     const f = b.ficha, st = statusBib(b), nb = st.s === "publicado" ? numerosBib(b) : null;
-    itens.push({ q, feed: b.videoUrl ? { k: "v", chave: "v:" + b.nome, nome: b.nome } : null, html: `<div class="card vid st-${st.s}${BIB_SEL?.has(b.nome) ? " sel" : ""}" data-bib="${esc(b.nome)}" ${b.videoUrl ? `data-feed="${esc("v:" + b.nome)}"` : ""}>
+    itens.push({ q, c: f.criado, feed: b.videoUrl ? { k: "v", chave: "v:" + b.nome, nome: b.nome } : null, html: `<div class="card vid st-${st.s}${BIB_SEL?.has(b.nome) ? " sel" : ""}" data-bib="${esc(b.nome)}" ${b.videoUrl ? `data-feed="${esc("v:" + b.nome)}"` : ""}>
       <div class="capa" style="background-image:url('${esc(b.capaUrl)}')">
         <span class="marca">${ic("i-check")}</span>
         <span class="tag">${esc(NOMES_TIPO[f.tipo] || "Reel")}</span>
@@ -3224,14 +3224,15 @@ function desenharBiblioteca() {
     const arqs = (PRODUCAO?.[pasta] || []);
     const story = p.it.formato === "stories";
     /* story: um cartão por arte; carrossel: um cartão só (capa = 1º slide), como um post do Instagram */
-    (arqs.length ? (story ? arqs : arqs.slice(0, 1)) : [null]).forEach((arq, i, todas) => { const chave = story ? `s:${pasta}:${i}` : `c:${pasta}`; itens.push({ q: p.it.data, feed: arq ? { k: story ? "s" : "c", chave, pasta, idx: i, p, arqs } : null, html: `<div class="card vid st-${p.s}" data-peca="${esc(pasta || "")}" data-idx="${i}" ${arq ? `data-feed="${esc(chave)}"` : ""}>
+    (arqs.length ? (story ? arqs : arqs.slice(0, 1)) : [null]).forEach((arq, i, todas) => { const chave = story ? `s:${pasta}:${i}` : `c:${pasta}`; itens.push({ q: p.it.data, c: p.it.criado || p.it.data, feed: arq ? { k: story ? "s" : "c", chave, pasta, idx: i, p, arqs } : null, html: `<div class="card vid st-${p.s}" data-peca="${esc(pasta || "")}" data-idx="${i}" ${arq ? `data-feed="${esc(chave)}"` : ""}>
       <div class="capa" style="background-image:url('${esc(arq ? arq.download_url : capaItem(p.it))}')"><span class="tag">${esc(FORMATOS[p.it.formato] || p.it.formato)}${story ? (todas.length > 1 ? ` ${i + 1}/${todas.length}` : "") : (arqs.length > 1 ? ` · ${arqs.length} slides` : "")}</span></div>
       <div class="info"><b>${esc(p.it.tema || "Sem tema ainda")}</b><div class="chips">${chipPeca(p)}</div></div>
     </div>` }); });
   });
-  /* sem data vai sempre para o fim; com data, a ordem escolhida */
+  /* ordem de criação (o mais novo em cima), vídeos e carrosséis juntos; na aba Agendados, pela data marcada; sem data vai para o fim */
+  const porAgenda = BIB_FILTRO === "agendados";
   itens.sort((a, b) => {
-    const ta = tempoDe(a.q), tb = tempoDe(b.q);
+    const ta = tempoDe(porAgenda ? a.q : a.c), tb = tempoDe(porAgenda ? b.q : b.c);
     if (!ta || !tb) return (!ta) - (!tb);
     return BIB_ORDEM === "antigos" ? ta - tb : tb - ta;
   });
