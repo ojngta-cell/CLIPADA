@@ -1,7 +1,7 @@
 {
   "titulo": "Esse NPC tá com bug?",
   "tipo": "reel",
-  "duracao": 85.0,
+  "duracao": 85,
   "tamanho": 34086919,
   "criado": "2026-11-19T13:02:40+00:00",
   "capa": "capa.jpg",
@@ -17,5 +17,7 @@
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-coringa-corte-4.mp4",
-  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom",
+  "arquivado": true,
+  "arquivado_em": "2026-11-24T18:08:04.020Z"
 }
