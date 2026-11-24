@@ -1,7 +1,7 @@
 {
   "titulo": "Porrada com martelo: Davy Jones no GTA 6",
   "tipo": "reel",
-  "duracao": 93.0,
+  "duracao": 93,
   "tamanho": 31633740,
   "criado": "2026-11-19T10:00:43+00:00",
   "capa": "capa.jpg",
@@ -17,5 +17,7 @@
     "autorizacao": "Pedido do Vitor em 19/11/2026: cortes de YouTubers de GTA 6 para divulgação, com crédito ao canal."
   },
   "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-yt-davy-corte-2.mp4",
-  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom"
+  "layout": "jogo inteiro (16:9 sem cortar), câmera do streamer em cima, sem zoom",
+  "arquivado": true,
+  "arquivado_em": "2026-11-24T18:27:33.381Z"
 }

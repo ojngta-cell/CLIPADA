@@ -1,7 +1,7 @@
 {
   "titulo": "Zerando o GTA 6 com o alanzoka · Vídeo 14 · Vida de foragido",
   "tipo": "reel",
-  "duracao": 118.0,
+  "duracao": 118,
   "tamanho": 42759798,
   "criado": "2026-11-19T06:18:31+00:00",
   "capa": "capa.jpg",
@@ -22,5 +22,7 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v14.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-zerando-v14.mp4",
+  "arquivado": true,
+  "arquivado_em": "2026-11-24T18:27:33.381Z"
 }

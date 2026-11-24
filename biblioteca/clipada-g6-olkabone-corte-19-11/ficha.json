@@ -1,7 +1,7 @@
 {
   "titulo": "O caminhão e o guard-rail do Olkabone no GTA 6",
   "tipo": "reel",
-  "duracao": 91.0,
+  "duracao": 91,
   "tamanho": 57662217,
   "criado": "2026-11-19T03:04:06+00:00",
   "capa": "capa.jpg",
@@ -17,5 +17,7 @@
     "jogo": "Grand Theft Auto VI",
     "autorizacao": "Vitor informou em 13/11/2026 que os streamers permitem e pagam por cortes das lives para divulgação."
   },
-  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-olkabone-corte-19-11.mp4"
+  "video_url": "https://github.com/ojngta-cell/CLIPADA/releases/download/biblioteca/clipada-g6-olkabone-corte-19-11.mp4",
+  "arquivado": true,
+  "arquivado_em": "2026-11-24T18:27:33.381Z"
 }
