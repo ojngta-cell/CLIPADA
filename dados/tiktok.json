@@ -1,5 +1,5 @@
 {
-  "atualizado": "2026-11-24T10:26:00-03:00",
+  "atualizado": "2026-11-25T10:21:00-03:00",
   "conta": {
     "handle": "ojn.br01",
     "seguidores": 1,
@@ -13,6 +13,10 @@
     },
     {
       "dia": "2026-11-24",
+      "seguidores": 1
+    },
+    {
+      "dia": "2026-11-25",
       "seguidores": 1
     }
   ],
